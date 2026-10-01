@@ -18,9 +18,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
 
     defaultConfig {
-        applicationId 'org.jitsi.meet'
-        versionCode vcode
-        versionName project.appVersion
+        applicationId 'com.guangyuxinneng.meeting'
+        versionCode project.hasProperty('meetingVersionCode') ? project.property('meetingVersionCode').toInteger() : vcode
+        versionName project.findProperty('meetingVersionName') ?: '1.0.6'
 
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
@@ -35,6 +35,18 @@ android {
                 cppFlags "-std=c++17"
                 cFlags "-DANDROID_PLATFORM=android-26"
             }
+        }
+    }
+
+    // Publish a compact APK for modern Android phones while retaining a
+    // universal build as a fallback. The previous 110 MB universal APK was
+    // frequently truncated by mobile browsers before installation.
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+            universalApk true
         }
     }
 
@@ -92,6 +104,10 @@ android {
 
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.5.1'
+
+    // React Native ships Fresco core; animated WebP support is optional.
+    implementation 'com.facebook.fresco:webpsupport:3.6.0'
+    implementation 'com.facebook.fresco:animated-webp:3.6.0'
 
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.13'
 

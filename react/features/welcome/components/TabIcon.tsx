@@ -2,8 +2,7 @@ import React from 'react';
 
 import Icon from '../../base/icons/components/Icon';
 import { StyleType } from '../../base/styles/functions.any';
-import BaseTheme from '../../base/ui/components/BaseTheme';
-import { INACTIVE_TAB_COLOR } from '../constants';
+import { ACTIVE_TAB_COLOR, INACTIVE_TAB_COLOR } from '../constants';
 
 interface IProps {
 
@@ -25,7 +24,7 @@ interface IProps {
 
 const TabIcon = ({ focused, src, style }: IProps) => (
     <Icon
-        color = { focused ? BaseTheme.palette.icon01 : INACTIVE_TAB_COLOR }
+        color = { focused ? ACTIVE_TAB_COLOR : INACTIVE_TAB_COLOR }
         size = { 24 }
         src = { src }
         style = { style } />

@@ -2,6 +2,7 @@ import { Platform, StyleSheet } from 'react-native';
 
 import { BoxModel } from '../../base/styles/components/styles/BoxModel';
 import BaseTheme from '../../base/ui/components/BaseTheme.native';
+import { brandPalette } from '../../internal-account/brandPalette.native';
 
 export const AVATAR_SIZE = 104;
 
@@ -145,6 +146,78 @@ export default {
         padding: BaseTheme.spacing[3]
     },
 
+    brandedRoomContainer: {
+        backgroundColor: brandPalette.surface,
+        borderBottomColor: brandPalette.border,
+        borderBottomWidth: 1,
+        paddingBottom: 18,
+        paddingHorizontal: 20,
+        paddingTop: 16
+    },
+
+    brandedRoomEyebrow: {
+        color: brandPalette.textMuted,
+        fontSize: 11,
+        fontWeight: '800',
+        letterSpacing: 1.6,
+        marginBottom: 4,
+        textTransform: 'uppercase'
+    },
+
+    brandedEnterRoomText: {
+        color: brandPalette.blackMoss,
+        fontSize: 22,
+        fontWeight: '800',
+        marginBottom: 4
+    },
+
+    brandedRoomHelper: {
+        color: brandPalette.textMuted,
+        fontSize: 13,
+        lineHeight: 19,
+        marginBottom: 12
+    },
+
+    brandedRoomAction: {
+        alignItems: 'center',
+        flexDirection: 'row',
+        gap: 10
+    },
+
+    brandedInputContainer: {
+        flex: 1,
+        marginBottom: 0
+    },
+
+    brandedInputField: {
+        backgroundColor: brandPalette.white,
+        borderColor: brandPalette.border,
+        borderRadius: 14,
+        borderWidth: 1,
+        minHeight: 52
+    },
+
+    brandedInputText: {
+        backgroundColor: brandPalette.white,
+        color: brandPalette.blackMoss,
+        fontSize: 16,
+        height: 52,
+        textAlign: 'left'
+    },
+
+    brandedJoinButton: {
+        alignItems: 'center',
+        backgroundColor: brandPalette.accent,
+        borderRadius: 14,
+        height: 52,
+        justifyContent: 'center',
+        shadowColor: brandPalette.shadow,
+        shadowOffset: { height: 4, width: 0 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+        width: 52
+    },
+
     /**
      * The container of the label of the audio-video switch.
      */
@@ -203,6 +276,10 @@ export default {
         overflow: 'hidden'
     },
 
+    brandedWelcomePage: {
+        backgroundColor: brandPalette.canvas
+    },
+
     customInput: {
         fontSize: 18,
         letterSpacing: 0,
@@ -213,6 +290,49 @@ export default {
         backgroundColor: BaseTheme.palette.uiBackground,
         flex: 1,
         overflow: 'hidden'
+    },
+
+    brandedRecentList: {
+        backgroundColor: brandPalette.canvas
+    },
+
+    brandedUpcomingEmptyCard: {
+        alignItems: 'center',
+        backgroundColor: brandPalette.surface,
+        borderColor: brandPalette.border,
+        borderRadius: 18,
+        borderWidth: 1,
+        flexDirection: 'row',
+        marginHorizontal: 16,
+        paddingHorizontal: 16,
+        paddingVertical: 16
+    },
+
+    brandedUpcomingEmptyIcon: {
+        alignItems: 'center',
+        backgroundColor: brandPalette.surfaceMuted,
+        borderRadius: 22,
+        height: 44,
+        justifyContent: 'center',
+        marginRight: 12,
+        width: 44
+    },
+
+    brandedUpcomingEmptyCopy: {
+        flex: 1
+    },
+
+    brandedUpcomingEmptyTitle: {
+        color: brandPalette.blackMoss,
+        fontSize: 16,
+        fontWeight: '700',
+        marginBottom: 3
+    },
+
+    brandedUpcomingEmptyText: {
+        color: brandPalette.textMuted,
+        fontSize: 13,
+        lineHeight: 19
     },
 
     recentListDisabled: {

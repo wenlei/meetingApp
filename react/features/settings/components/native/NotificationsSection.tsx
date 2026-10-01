@@ -1,10 +1,12 @@
 import React, { useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Divider } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { IReduxState } from '../../../app/types';
 import { updateSettings } from '../../../base/settings/actions';
 import Switch from '../../../base/ui/components/native/Switch';
+import { isWelcomePageEnabled } from '../../../welcome/functions';
 import { getNotificationsTabProps } from '../../functions.any';
 
 import FormRow from './FormRow';
@@ -12,7 +14,10 @@ import FormSection from './FormSection';
 import styles from './styles';
 
 const NotificationsSection = () => {
+    const { i18n } = useTranslation();
+    const isChinese = i18n.language?.startsWith('zh') ?? true;
     const dispatch = useDispatch();
+    const brandedApp = useSelector(isWelcomePageEnabled);
     const {
         soundsIncomingMessage,
         soundsParticipantJoined,
@@ -95,7 +100,8 @@ const NotificationsSection = () => {
     return (
         <>
             <FormSection
-                label = 'settings.playSounds'>
+                label = 'settings.playSounds'
+                summary = { isChinese ? '消息与参会提示音' : 'Meeting and message sounds' }>
                 {
                     sounds.map(({ label, state, name, disabled }) => (
                         <FormRow
@@ -113,9 +119,10 @@ const NotificationsSection = () => {
                 Object.keys(enabledNotifications).length > 0 && (
                     <>
                         {/* @ts-ignore */}
-                        <Divider style = { styles.fieldSeparator } />
+                        { !brandedApp && <Divider style = { styles.fieldSeparator } /> }
                         <FormSection
-                            label = 'notify.displayNotifications'>
+                            label = 'notify.displayNotifications'
+                            summary = { isChinese ? '选择要显示的通知' : 'Choose visible notifications' }>
                             {
                                 Object.keys(enabledNotifications).map(name => (
                                     <FormRow

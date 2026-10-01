@@ -1,4 +1,5 @@
 import BaseTheme from '../../../base/ui/components/BaseTheme.native';
+import { brandAlpha, brandPalette } from '../../../internal-account/brandPalette.native';
 
 export const ANDROID_UNDERLINE_COLOR = 'transparent';
 export const PLACEHOLDER_COLOR = BaseTheme.palette.focus01;
@@ -8,8 +9,22 @@ export const PLACEHOLDER_COLOR = BaseTheme.palette.focus01;
  */
 export default {
 
+    windowSection: {
+        marginHorizontal: 16,
+        marginTop: 6,
+        marginBottom: 4
+    },
+
+    windowProfileContent: {
+        borderWidth: 0,
+        borderRadius: 0,
+        shadowOpacity: 0
+    },
+
     profileContainerWrapper: {
-        margin: BaseTheme.spacing[4]
+        marginHorizontal: 16,
+        marginTop: 16,
+        marginBottom: 8
     },
 
     profileContainer: {
@@ -19,6 +34,103 @@ export default {
         flexDirection: 'row',
         justifyContent: 'flex-start',
         padding: BaseTheme.spacing[3]
+    },
+
+    brandedProfileContainer: {
+        backgroundColor: brandPalette.surface,
+        borderColor: brandPalette.border,
+        borderRadius: 20,
+        borderWidth: 1,
+        minHeight: 82,
+        paddingHorizontal: 18,
+        paddingVertical: 14,
+        shadowColor: brandPalette.shadow,
+        shadowOffset: { height: 8, width: 0 },
+        shadowOpacity: 0.04,
+        shadowRadius: 16
+    },
+
+    brandedSection: {
+        backgroundColor: brandPalette.surface,
+        borderColor: brandPalette.border,
+        borderRadius: 18,
+        borderWidth: 1,
+        marginHorizontal: 16,
+        marginTop: 6,
+        marginBottom: 4,
+        overflow: 'hidden' as const
+    },
+
+    brandedSectionExpanded: {
+        borderColor: brandPalette.border,
+        backgroundColor: brandPalette.surface
+    },
+
+    accordionTrigger: {
+        alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        minHeight: 62,
+        paddingHorizontal: 18,
+        paddingVertical: 11
+    },
+
+    accordionHeading: {
+        flex: 1,
+        paddingRight: 12
+    },
+
+    accordionTitle: {
+        color: brandPalette.blackMoss,
+        fontSize: 16,
+        fontWeight: '700' as const
+    },
+
+    accordionSummary: {
+        color: brandPalette.textMuted,
+        fontSize: 12,
+        marginTop: 3
+    },
+
+    accordionChevron: {
+        alignItems: 'center',
+        backgroundColor: brandPalette.surfaceMuted,
+        borderRadius: 16,
+        height: 32,
+        justifyContent: 'center',
+        width: 32
+    },
+
+    accordionChevronExpanded: {
+        backgroundColor: brandPalette.surfaceMuted
+    },
+
+    accordionChevronText: {
+        color: brandPalette.blackMoss,
+        fontSize: 22,
+        fontWeight: '500' as const,
+        lineHeight: 27
+    },
+
+    accordionPanel: {
+        borderTopColor: brandAlpha.border,
+        borderTopWidth: 1,
+        paddingBottom: 4
+    },
+
+    rowSeparator: {
+        backgroundColor: brandAlpha.border,
+        height: 1
+    },
+
+    brandedSectionTitle: {
+        color: brandPalette.teaLeaf,
+        fontSize: 12,
+        fontWeight: '700' as const,
+        letterSpacing: 0.8,
+        marginHorizontal: 16,
+        marginTop: 12,
+        marginBottom: 4
     },
 
     profileView: {
@@ -56,7 +168,7 @@ export default {
 
     profileViewArrow: {
         position: 'absolute',
-        right: BaseTheme.spacing[3]
+        right: 16
     },
 
     /**
@@ -67,14 +179,19 @@ export default {
         flex: 1
     },
 
+    brandedSettingsViewContainer: {
+        backgroundColor: brandPalette.canvas,
+        flex: 1
+    },
+
     /**
      * Standardized style for a field container {@code View}.
      */
     fieldContainer: {
         alignItems: 'center',
         flexDirection: 'row',
-        minHeight: BaseTheme.spacing[8],
-        paddingHorizontal: BaseTheme.spacing[2],
+        minHeight: 52,
+        paddingHorizontal: 12,
         justifyContent: 'space-between'
     },
 
@@ -101,7 +218,12 @@ export default {
      * Text of the field labels on the form.
      */
     fieldLabelText: {
-        ...BaseTheme.typography.bodyShortRegularLarge
+        fontSize: 14,
+        fontWeight: '500' as const
+    },
+
+    brandedFieldLabelText: {
+        color: brandPalette.blackMoss
     },
 
     /**
@@ -111,7 +233,7 @@ export default {
         marginHorizontal: BaseTheme.spacing[4],
         borderBottomWidth: 1,
         borderColor: BaseTheme.palette.ui05,
-        marginVertical: BaseTheme.spacing[3]
+        marginVertical: 4
     },
 
     /**
@@ -139,7 +261,7 @@ export default {
         ...BaseTheme.typography.bodyShortBold,
         color: BaseTheme.palette.text02,
         marginHorizontal: BaseTheme.spacing[4],
-        marginVertical: BaseTheme.spacing[3]
+        marginVertical: BaseTheme.spacing[2]
     },
 
     /**
@@ -189,6 +311,10 @@ export default {
         ...BaseTheme.typography.bodyShortRegularLarge,
         color: BaseTheme.palette.text01,
         marginHorizontal: BaseTheme.spacing[2]
+    },
+
+    brandedLanguageText: {
+        color: brandPalette.blackMoss
     },
 
     /**

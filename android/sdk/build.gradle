@@ -207,6 +207,12 @@ android.libraryVariants.all { def variant ->
 
     mergeAssetsTask.dependsOn(currentBundleTask)
     mergeResourcesTask.dependsOn(currentBundleTask)
+    // The bundle is copied in doLast below; declare it as an input so a fresh
+    // JS bundle invalidates Gradle's cached merged assets on release builds.
+    if (currentBundleTask.enabled) {
+        mergeAssetsTask.inputs.file(jsBundleFile)
+        mergeResourcesTask.inputs.dir(resourcesDir)
+    }
 
     mergeAssetsTask.doLast {
         def assetsDir = mergeAssetsTask.outputDir.get()

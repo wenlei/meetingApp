@@ -58,6 +58,7 @@ interface IProps extends IInputProps {
 interface ICustomStyles {
     clearButton?: Object;
     container?: Object;
+    field?: Object;
     input?: Object;
 }
 
@@ -124,7 +125,7 @@ const Input = forwardRef<TextInput, IProps>(({
 
     return (<View style = { [ styles.inputContainer, customStyles?.container ] as StyleProp<ViewStyle> }>
         {label && <Text style = { styles.label }>{ label }</Text>}
-        <View style = { styles.fieldContainer as StyleProp<ViewStyle> }>
+        <View style = { [ styles.fieldContainer, customStyles?.field ] as StyleProp<ViewStyle> }>
             {icon && <Icon
                 size = { 22 }
                 src = { icon }

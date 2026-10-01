@@ -2,22 +2,24 @@ import { NativeModules } from 'react-native';
 
 import { IStateful } from '../base/app/types';
 import { toState } from '../base/redux/functions';
+import { DEFAULT_SERVER_URL } from '../base/settings/constants';
 import { getServerURL } from '../base/settings/functions.native';
+import { isWelcomePageEnabled } from '../welcome/functions';
 
 export * from './functions.any';
 
 /**
- * Retrieves the default URL for the app. This can either come from a prop to
- * the root App component or be configured in the settings.
+ * Retrieves the branded App's default server URL. Saved stock-Jitsi server
+ * preferences cannot silently redirect internal meetings elsewhere.
  *
- * @param {Function|Object} stateful - The redux store or {@code getState}
+ * @param {Function|Object} _stateful - The redux store or {@code getState}
  * function.
  * @returns {string} - Default URL for the app.
  */
-export function getDefaultURL(stateful: IStateful) {
-    const state = toState(stateful);
+export function getDefaultURL(_stateful: IStateful) {
+    const state = toState(_stateful);
 
-    return getServerURL(state);
+    return isWelcomePageEnabled(state) ? DEFAULT_SERVER_URL : getServerURL(state);
 }
 
 /**

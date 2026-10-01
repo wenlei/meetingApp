@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { IReduxState } from '../../../app/types';
 import { updateSettings } from '../../../base/settings/actions';
 import Switch from '../../../base/ui/components/native/Switch';
+import { isWelcomePageEnabled } from '../../../welcome/functions';
 
 import FormRow from './FormRow';
 import FormSection from './FormSection';
@@ -15,8 +16,10 @@ import styles from './styles';
 const { AppInfo } = NativeModules;
 
 const AdvancedSection = () => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const isChinese = i18n.language?.startsWith('zh') ?? true;
     const dispatch = useDispatch();
+    const brandedApp = useSelector(isWelcomePageEnabled);
     const {
         disableCrashReporting,
         disableCallIntegration,
@@ -77,7 +80,8 @@ const AdvancedSection = () => {
     return (
         <>
             <FormSection
-                label = 'settingsView.advanced'>
+                label = 'settingsView.advanced'
+                summary = { isChinese ? '连接与系统行为' : 'Connection and system behavior' }>
                 {
                     switches.map(({ label, state, name }) => (
                         <FormRow
@@ -90,23 +94,25 @@ const AdvancedSection = () => {
                     ))
                 }
             </FormSection>
-            {/* @ts-ignore */}
-            <Divider style = { styles.fieldSeparator } />
-            <FormSection
-                label = 'settingsView.buildInfoSection'>
-                <FormRow
-                    label = 'settingsView.version'>
-                    <Text style = { styles.text }>
-                        {`${AppInfo.version} build ${AppInfo.buildNumber}`}
-                    </Text>
-                </FormRow>
-                <FormRow
-                    label = 'settingsView.sdkVersion'>
-                    <Text style = { styles.text }>
-                        {AppInfo.sdkVersion}
-                    </Text>
-                </FormRow>
-            </FormSection>
+            { !brandedApp && <>
+                {/* @ts-ignore */}
+                <Divider style = { styles.fieldSeparator } />
+                <FormSection
+                    label = 'settingsView.buildInfoSection'>
+                    <FormRow
+                        label = 'settingsView.version'>
+                        <Text style = { styles.text }>
+                            {`${AppInfo.version} build ${AppInfo.buildNumber}`}
+                        </Text>
+                    </FormRow>
+                    <FormRow
+                        label = 'settingsView.sdkVersion'>
+                        <Text style = { styles.text }>
+                            {AppInfo.sdkVersion}
+                        </Text>
+                    </FormRow>
+                </FormSection>
+            </> }
         </>
     );
 };

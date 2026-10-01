@@ -1,8 +1,11 @@
 import React, { Component } from 'react';
 import { WithTranslation } from 'react-i18next';
 import { Text, View, ViewStyle } from 'react-native';
+import { connect } from 'react-redux';
 
+import { IReduxState } from '../../../app/types';
 import { translate } from '../../../base/i18n/functions';
+import { isWelcomePageEnabled } from '../../../welcome/functions';
 
 import styles, { ANDROID_UNDERLINE_COLOR, PLACEHOLDER_COLOR } from './styles';
 
@@ -10,6 +13,9 @@ import styles, { ANDROID_UNDERLINE_COLOR, PLACEHOLDER_COLOR } from './styles';
  * The type of the React {@code Component} props of {@link FormRow}.
  */
 interface IProps extends WithTranslation {
+
+    /** Whether the branded mobile shell is active. */
+    _brandedApp: boolean;
 
     /**
      * Component's children.
@@ -75,7 +81,8 @@ class FormRow extends Component<IProps> {
                     <Text
                         style = { [
                             styles.text,
-                            styles.fieldLabelText
+                            styles.fieldLabelText,
+                            this.props._brandedApp ? styles.brandedFieldLabelText : undefined
                         ] } >
                         { t(this.props.label) }
                     </Text>
@@ -143,4 +150,14 @@ class FormRow extends Component<IProps> {
     }
 }
 
-export default translate(FormRow);
+/**
+ * Selects the branded shell state.
+ *
+ * @param {IReduxState} state - Redux state.
+ * @returns {{ _brandedApp: boolean }} Props used by the row.
+ */
+function _mapStateToProps(state: IReduxState) {
+    return { _brandedApp: isWelcomePageEnabled(state) };
+}
+
+export default translate(connect(_mapStateToProps)(FormRow));

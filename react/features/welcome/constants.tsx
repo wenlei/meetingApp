@@ -1,12 +1,12 @@
 import React from 'react';
 
 import { IconCalendar, IconGear, IconRestore } from '../base/icons/svg';
-import BaseTheme from '../base/ui/components/BaseTheme.native';
+import { brandPalette } from '../internal-account/brandPalette.native';
 
 import TabIcon from './components/TabIcon';
 
-export const ACTIVE_TAB_COLOR = BaseTheme.palette.welcomeTabActive;
-export const INACTIVE_TAB_COLOR = BaseTheme.palette.welcomeTabInactive;
+export const ACTIVE_TAB_COLOR = brandPalette.blackMoss;
+export const INACTIVE_TAB_COLOR = brandPalette.textMuted;
 
 export const tabBarOptions = {
     tabBarActiveTintColor: ACTIVE_TAB_COLOR,
@@ -15,7 +15,8 @@ export const tabBarOptions = {
         fontSize: 12,
     },
     tabBarStyle: {
-        backgroundColor: BaseTheme.palette.welcomeCard
+        backgroundColor: brandPalette.surface,
+        borderTopColor: brandPalette.border
     }
 };
 

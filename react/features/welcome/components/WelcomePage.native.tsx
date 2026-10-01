@@ -6,6 +6,7 @@ import {
     StyleProp,
     TextStyle,
     TouchableHighlight,
+    TouchableOpacity,
     View,
     ViewStyle
 } from 'react-native';
@@ -16,7 +17,7 @@ import { getName } from '../../app/functions.native';
 import { IReduxState } from '../../app/types';
 import { translate } from '../../base/i18n/functions';
 import Icon from '../../base/icons/components/Icon';
-import { IconWarning } from '../../base/icons/svg';
+import { IconArrowRight, IconWarning } from '../../base/icons/svg';
 import LoadingIndicator from '../../base/react/components/native/LoadingIndicator';
 import Text from '../../base/react/components/native/Text';
 import BaseTheme from '../../base/ui/components/BaseTheme.native';
@@ -24,8 +25,10 @@ import Button from '../../base/ui/components/native/Button';
 import Input from '../../base/ui/components/native/Input';
 import { BUTTON_TYPES } from '../../base/ui/constants.native';
 import getUnsafeRoomText from '../../base/util/getUnsafeRoomText.native';
+import { brandPalette } from '../../internal-account/brandPalette.native';
 import WelcomePageTabs
     from '../../mobile/navigation/components/welcome/components/WelcomePageTabs';
+import { isWelcomePageEnabled } from '../functions';
 
 import {
     IProps as AbstractProps,
@@ -35,6 +38,9 @@ import {
 import styles from './styles.native';
 
 interface IProps extends AbstractProps {
+
+    /** Whether the Guangyu mobile shell is active. */
+    _brandedApp: boolean;
 
     /**
      * Function for getting the unsafe room text.
@@ -93,13 +99,10 @@ class WelcomePage extends AbstractWelcomePage<IProps> {
     override componentDidMount() {
         super.componentDidMount();
 
-        const {
-            navigation,
-            t
-        } = this.props;
+        const { navigation } = this.props;
 
         navigation.setOptions({
-            headerTitle: t('welcomepage.headerTitle')
+            headerTitle: getName()
         });
 
         navigation.addListener('focus', () => {
@@ -256,6 +259,10 @@ class WelcomePage extends AbstractWelcomePage<IProps> {
     _renderHintBox() {
         const { t } = this.props;
 
+        if (this.props._brandedApp) {
+            return null;
+        }
+
         if (this.state._fieldFocused) {
             return (
                 <Animated.View style = { this._getHintBoxStyle() as ViewStyle[] }>
@@ -326,6 +333,7 @@ class WelcomePage extends AbstractWelcomePage<IProps> {
         const roomnameAccLabel = 'welcomepage.accessibilityLabel.roomname';
         const { t } = this.props;
         const { isSettingsScreenFocused } = this.state;
+        const { _brandedApp } = this.props;
 
         return (
             <Animated.View
@@ -335,22 +343,63 @@ class WelcomePage extends AbstractWelcomePage<IProps> {
                 ] as StyleProp<ViewStyle> }>
                 <SafeAreaView
                     edges = { [ 'left', 'right' ] }
-                    style = { styles.roomContainer as StyleProp<ViewStyle> }>
-                    <Text style = { styles.enterRoomText as StyleProp<TextStyle> }>
-                        { t('welcomepage.roomname') }
+                    style = { [
+                        styles.roomContainer,
+                        _brandedApp ? styles.brandedRoomContainer : undefined
+                    ] as StyleProp<ViewStyle> }>
+                    { _brandedApp && <Text style = { styles.brandedRoomEyebrow as TextStyle }>
+                        { t('welcomepage.join') }
+                    </Text> }
+                    <Text
+                        style = { [
+                            styles.enterRoomText,
+                            _brandedApp ? styles.brandedEnterRoomText : undefined
+                        ] as StyleProp<TextStyle> }>
+                        { _brandedApp
+                            ? (this.props.i18n.language?.startsWith('zh')
+                                ? '创建或加入会议' : 'Create or join a meeting')
+                            : t('welcomepage.roomname') }
                     </Text>
-                    <Input
-                        accessibilityLabel = { t(roomnameAccLabel) }
-                        autoCapitalize = { 'none' }
-                        autoFocus = { false }
-                        customStyles = {{ input: styles.customInput }}
-                        onBlur = { this._onFieldBlur }
-                        onChange = { this._onRoomChange }
-                        onFocus = { this._onFieldFocus }
-                        onSubmitEditing = { this._onJoin }
-                        placeholder = { this.state.roomPlaceholder }
-                        returnKeyType = { 'go' }
-                        value = { this.state.room } />
+                    { _brandedApp && <Text style = { styles.brandedRoomHelper as TextStyle }>
+                        { this.props.i18n.language?.startsWith('zh')
+                            ? '输入会议室名称；留空则自动生成安全名称'
+                            : 'Enter a room name, or leave it blank to generate one' }
+                    </Text> }
+                    <View style = { _brandedApp ? styles.brandedRoomAction as ViewStyle : undefined }>
+                        <Input
+                            accessibilityLabel = { t(roomnameAccLabel) }
+                            autoCapitalize = { 'none' }
+                            autoFocus = { false }
+                            customStyles = {{
+                                container: _brandedApp ? styles.brandedInputContainer : undefined,
+                                field: _brandedApp ? styles.brandedInputField : undefined,
+                                input: [
+                                    styles.customInput,
+                                    _brandedApp ? styles.brandedInputText : undefined
+                                ]
+                            }}
+                            onBlur = { this._onFieldBlur }
+                            onChange = { this._onRoomChange }
+                            onFocus = { this._onFieldFocus }
+                            onSubmitEditing = { this._onJoin }
+                            placeholder = { this.state.roomPlaceholder }
+                            returnKeyType = { 'go' }
+                            value = { this.state.room } />
+                        { _brandedApp && <TouchableOpacity
+                            accessibilityLabel = { t('welcomepage.accessibilityLabel.join') }
+                            activeOpacity = { 0.82 }
+                            onPress = { this._onJoin }
+                            style = { styles.brandedJoinButton as ViewStyle }>
+                            { this.state.joining
+                                ? <LoadingIndicator
+                                    color = { brandPalette.white }
+                                    size = 'small' />
+                                : <Icon
+                                    color = { brandPalette.white }
+                                    size = { 24 }
+                                    src = { IconArrowRight } /> }
+                        </TouchableOpacity> }
+                    </View>
                     {
                         this._renderInsecureRoomNameWarning()
                     }
@@ -371,7 +420,11 @@ class WelcomePage extends AbstractWelcomePage<IProps> {
         return (
             <>
                 { this._renderRoomNameInput() }
-                <View style = { styles.welcomePage as ViewStyle }>
+                <View
+                    style = { [
+                        styles.welcomePage,
+                        this.props._brandedApp ? styles.brandedWelcomePage : undefined
+                    ] as ViewStyle[] }>
                     <WelcomePageTabs
                         disabled = { Boolean(this.state._fieldFocused) } // @ts-ignore
                         onListContainerPress = { this._onFieldBlur }
@@ -408,6 +461,7 @@ class WelcomePage extends AbstractWelcomePage<IProps> {
 function _mapStateToProps(state: IReduxState) {
     return {
         ..._abstractMapStateToProps(state),
+        _brandedApp: isWelcomePageEnabled(state),
 
         // _reducedUI: state['features/base/responsive-ui'].reducedUI
         getUnsafeRoomTextFn: (t: Function) => getUnsafeRoomText(state, t, 'welcome')

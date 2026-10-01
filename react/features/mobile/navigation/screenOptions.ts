@@ -3,6 +3,7 @@ import { TransitionPresets } from '@react-navigation/stack';
 import { Platform } from 'react-native';
 
 import BaseTheme from '../../base/ui/components/BaseTheme.native';
+import { brandPalette } from '../../internal-account/brandPalette.native';
 
 import { goBack } from './components/conference/ConferenceNavigationContainerRef';
 import { goBack as goBackToLobbyScreen } from './components/lobby/LobbyNavigationContainerRef';
@@ -34,7 +35,7 @@ export const navigationContainerTheme = {
     ...DefaultTheme,
     colors: {
         ...DefaultTheme.colors,
-        background: BaseTheme.palette.uiBackground
+        background: brandPalette.canvas
     }
 };
 
@@ -46,10 +47,10 @@ export const welcomeScreenOptions = {
     gestureEnabled: false,
     headerShown: true,
     headerStyle: {
-        backgroundColor: BaseTheme.palette.ui01
+        backgroundColor: brandPalette.canvas
     },
     headerTitleStyle: {
-        color: BaseTheme.palette.text01
+        color: brandPalette.blackMoss
     }
 };
 
@@ -223,11 +224,12 @@ export const preJoinScreenOptions = {
  * Screen options for profile setting.
  */
 export const profileSettingsScreenOptions = {
+    headerTintColor: brandPalette.blackMoss,
     headerStyle: {
-        backgroundColor: BaseTheme.palette.ui01
+        backgroundColor: brandPalette.canvas
     },
     headerTitleStyle: {
-        color: BaseTheme.palette.text01
+        color: brandPalette.blackMoss
     },
     headerBackButtonDisplayMode: 'minimal' as const
 };

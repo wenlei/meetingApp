@@ -21,6 +21,13 @@ import {
     parseURIString,
     toURLString
 } from '../base/util/uri';
+import {
+    MEETING_URL,
+    queueAccountError,
+    queueRoom,
+    restoreSession,
+    roomURL
+} from '../internal-account/mobileSession.native';
 import { isPrejoinPageEnabled } from '../mobile/navigation/functions';
 import {
     goBackToRoot,
@@ -30,6 +37,7 @@ import {
 import { screen } from '../mobile/navigation/routes';
 import { clearNotifications } from '../notifications/actions';
 import { isUnsafeRoomWarningEnabled } from '../prejoin/functions.native';
+import { isWelcomePageEnabled } from '../welcome/functions';
 
 import { maybeRedirectToTokenAuthUrl } from './actions.any';
 import { addTrackStateToURL, getDefaultURL } from './functions.native';
@@ -75,6 +83,36 @@ export function appNavigate(uri?: string, options: IReloadNowOptions = {}) {
         }
 
         location.protocol || (location.protocol = 'https:');
+
+        // The internal App always joins with a fresh room-scoped token for the
+        // currently signed-in account. Never trust a JWT embedded in an invite.
+        if (location.room && isWelcomePageEnabled(getState())) {
+            const expected = new URL(MEETING_URL);
+
+            if (location.hostname !== expected.hostname || location.port !== expected.port) {
+                queueAccountError('此 App 仅支持光域新能会议室的邀请链接。');
+                replaceRoot(screen.welcome.main);
+
+                return;
+            }
+            try {
+                const session = await restoreSession();
+
+                if (!session) {
+                    queueRoom(location.room);
+                    replaceRoot(screen.welcome.main);
+
+                    return;
+                }
+                location = parseURIString(await roomURL(location.room));
+            } catch (error) {
+                queueAccountError(error instanceof Error ? error.message : '暂时无法加入会议。');
+                replaceRoot(screen.welcome.main);
+
+                return;
+            }
+        }
+
         const { contextRoot, host, hostname, pathname, room } = location;
         const locationURL = new URL(location.toString());
         const { conference } = getConferenceState(getState());
@@ -135,6 +173,12 @@ export function appNavigate(uri?: string, options: IReloadNowOptions = {}) {
                     config = createFakeConfig(baseURL);
                 }
             }
+        }
+
+        if (room) {
+            // The visible participant name must follow the signed account
+            // identity, not an editable prejoin/profile field.
+            config.readOnlyName = true;
         }
 
         if (getState()['features/base/config'].locationURL !== locationURL) {

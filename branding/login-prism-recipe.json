@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "name": "Untitled blend",
+  "type": "PRISM2",
+  "animated": true,
+  "width": 2048,
+  "height": 1506,
+  "speed": 512,
+  "startT": 104.08042256000016,
+  "blur": 15,
+  "fieldBlur": 15,
+  "grain": 30,
+  "loop": "expand",
+  "stops": ["#26483D", "#557D57", "#A4B963", "#D6D998", "#F2EDCC"],
+  "divs": [0.2, 0.41133857204401664, 0.6, 0.8],
+  "params": {
+    "count": 10,
+    "gap": 0,
+    "envelope": "ramp",
+    "fusion": {
+      "shape": "crest",
+      "direction": 2,
+      "size": 115,
+      "height": 58,
+      "focus": 50,
+      "position": 44,
+      "blend": 68,
+      "facets": 49,
+      "motion": "expand",
+      "reverse": false
+    }
+  }
+}

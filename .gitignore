@@ -45,6 +45,7 @@ project.xcworkspace
 build/
 .idea
 .gradle
+.kotlin/
 local.properties
 *.iml
 .cxx/
@@ -123,4 +124,3 @@ react-native-sdk/sounds
 # tests
 tests/.env
 test-results
-

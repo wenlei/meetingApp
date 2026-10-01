@@ -67,6 +67,7 @@ class ReactHostHolder {
             = new ArrayList<>(Arrays.<NativeModule>asList(
                 new AndroidSettingsModule(reactContext),
                 new AppInfoModule(reactContext),
+                new AppUpdateModule(reactContext),
                 new AudioModeModule(reactContext),
                 new DropboxModule(reactContext),
                 new ExternalAPIModule(reactContext),
@@ -98,6 +99,7 @@ class ReactHostHolder {
             new com.reactnativecommunity.netinfo.NetInfoPackage(),
             new com.reactnativepagerview.PagerViewPackage(),
             new com.oblador.performance.PerformancePackage(),
+            new com.oblador.keychain.KeychainPackage(),
             new com.reactnativecommunity.slider.ReactSliderPackage(),
             new com.brentvatne.react.ReactVideoPackage(),
             new com.reactnativecommunity.webview.RNCWebViewPackage(),

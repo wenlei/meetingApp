@@ -5,13 +5,12 @@ import { connect } from 'react-redux';
 
 import { IReduxState, IStore } from '../../../app/types';
 import { getConferenceState } from '../../../base/conference/functions';
+import AppUpdateDialog from '../../../internal-account/AppUpdateDialog.native';
+import InternalWelcomePage from '../../../internal-account/InternalWelcomePage.native';
 import DialInSummary from '../../../invite/components/dial-in-summary/native/DialInSummary';
 import Prejoin from '../../../prejoin/components/native/Prejoin';
 import UnsafeRoomWarning from '../../../prejoin/components/native/UnsafeRoomWarning';
 import VisitorsQueue from '../../../visitors/components/native/VisitorsQueue';
-// eslint-disable-next-line
-// @ts-ignore
-import WelcomePage from '../../../welcome/components/WelcomePage';
 import { isWelcomePageEnabled } from '../../../welcome/functions';
 import { _ROOT_NAVIGATION_READY } from '../actionTypes';
 import { rootNavigationRef } from '../rootNavigationContainerRef';
@@ -76,7 +75,7 @@ const RootNavigationContainer = ({ dispatch, hasRoomOnLaunch, isWelcomePageAvail
                 <RootStack.Navigator
                     initialRouteName = { initialRouteName }>
                     <RootStack.Screen // @ts-ignore
-                        component = { WelcomePage }
+                        component = { InternalWelcomePage }
                         name = { screen.welcome.main }
                         options = { welcomeScreenOptions } />
                     <RootStack.Screen // @ts-ignore
@@ -105,6 +104,7 @@ const RootNavigationContainer = ({ dispatch, hasRoomOnLaunch, isWelcomePageAvail
                         options = { conferenceNavigationContainerScreenOptions } />
                 </RootStack.Navigator>
             </NavigationContainer>
+            <AppUpdateDialog />
         </NavigationIndependentTree>
     );
 };

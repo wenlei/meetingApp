@@ -97,6 +97,7 @@
     "react-native-dialog": "https://github.com/jitsi/react-native-dialog/releases/download/v9.2.2-jitsi.1/react-native-dialog-9.2.2.tgz",
     "react-native-gesture-handler": "3.2.1",
     "react-native-get-random-values": "1.11.0",
+    "react-native-keychain": "^10.0.0",
     "react-native-orientation-locker": "https://github.com/jitsi/react-native-orientation-locker.git#0c42e6f8e9d86397b14b3f03f0ed9b2b73211333",
     "react-native-pager-view": "9.0.4",
     "react-native-paper": "5.14.5",

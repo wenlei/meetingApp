@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { IReduxState } from '../../../app/types';
 import { login, logout } from '../../../authentication/actions.native';
 import Avatar from '../../../base/avatar/components/Avatar';
+import { isNameReadOnly } from '../../../base/config/functions.any';
 import { IconArrowLeft } from '../../../base/icons/svg';
 import JitsiScreen from '../../../base/modal/components/JitsiScreen';
 import { getLocalParticipant } from '../../../base/participants/functions';
@@ -23,6 +24,7 @@ import {
     navigate
 } from '../../../mobile/navigation/components/settings/SettingsNavigationContainerRef';
 import { screen } from '../../../mobile/navigation/routes';
+import { isWelcomePageEnabled } from '../../../welcome/functions';
 
 import FormSection from './FormSection';
 import { AVATAR_SIZE } from './constants';
@@ -41,7 +43,10 @@ const ProfileView = ({ isInWelcomePage }: {
     );
     const participant = useSelector((state: IReduxState) => getLocalParticipant(state));
     const { locationURL } = useSelector((state: IReduxState) => state['features/base/connection']);
-    const showAuthButton = !isInWelcomePage && !locationURL?.hostname?.includes('8x8.vc');
+    const brandedApp = useSelector(isWelcomePageEnabled);
+    const serverReadOnlyName = useSelector(isNameReadOnly);
+    const readOnlyName = brandedApp || serverReadOnlyName;
+    const showAuthButton = !brandedApp && !isInWelcomePage && !locationURL?.hostname?.includes('8x8.vc');
 
     const [ displayName, setDisplayName ] = useState(reduxDisplayName);
     const [ email, setEmail ] = useState(reduxEmail);
@@ -58,13 +63,13 @@ const ProfileView = ({ isInWelcomePage }: {
 
     const onApplySettings = useCallback(() => {
         dispatch(updateSettings({
-            displayName,
+            ...(!readOnlyName && { displayName }),
             email
         }));
 
         navigate(screen.settings.main);
     },
-    [ dispatch, updateSettings, email, displayName ]);
+    [ dispatch, updateSettings, email, displayName, readOnlyName ]);
 
     const onLogin = useCallback(() => {
         dispatch(login());
@@ -125,9 +130,10 @@ const ProfileView = ({ isInWelcomePage }: {
                             participantId = { participant?.id }
                             size = { AVATAR_SIZE } />
                     </View>
-                    <FormSection>
+                    <FormSection label = { brandedApp ? t('settingsView.profileSection') : undefined }>
                         <Input
                             customStyles = {{ container: styles.customContainer }}
+                            editable = { !readOnlyName }
                             label = { t('settingsView.displayName') }
                             onChange = { onDisplayNameChanged }
                             placeholder = { t('settingsView.displayNamePlaceholderText') }

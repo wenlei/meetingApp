@@ -1,0 +1,12 @@
+diff --git a/node_modules/react-native-worklets-core/android/build.gradle b/node_modules/react-native-worklets-core/android/build.gradle
+index 1597a5c..db51f71 100644
+--- a/node_modules/react-native-worklets-core/android/build.gradle
++++ b/node_modules/react-native-worklets-core/android/build.gradle
+@@ -71,6 +71,7 @@ task deleteCmakeCache() {
+ 
+ android {
+   namespace "com.worklets"
++  ndkVersion getExtOrDefault("ndkVersion")
+   compileSdkVersion getExtOrIntegerDefault("compileSdkVersion")
+ 
+   defaultConfig {

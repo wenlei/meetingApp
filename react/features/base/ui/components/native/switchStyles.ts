@@ -1,5 +1,5 @@
-import BaseTheme from '../BaseTheme.native';
+import { brandPalette } from '../../../../internal-account/brandPalette.native';
 
-export const ENABLED_TRACK_COLOR = BaseTheme.palette.action01;
-export const DISABLED_TRACK_COLOR = BaseTheme.palette.ui05;
-export const THUMB_COLOR = BaseTheme.palette.icon01;
+export const ENABLED_TRACK_COLOR = brandPalette.accent;
+export const DISABLED_TRACK_COLOR = '#BCC7B8';
+export const THUMB_COLOR = brandPalette.surface;

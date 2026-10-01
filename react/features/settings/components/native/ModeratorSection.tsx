@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { IReduxState } from '../../../app/types';
@@ -15,6 +16,8 @@ import FormRow from './FormRow';
 import FormSection from './FormSection';
 
 const ModeratorSection = () => {
+    const { i18n } = useTranslation();
+    const isChinese = i18n.language?.startsWith('zh') ?? true;
     const dispatch = useDispatch();
     const {
         audioModerationEnabled,
@@ -145,7 +148,8 @@ const ModeratorSection = () => {
 
     return (
         <FormSection
-            label = 'settings.playSounds'>
+            label = 'settings.moderatorOptions'
+            summary = { isChinese ? '会议控制与参与权限' : 'Meeting controls and permissions' }>
             {
                 moderationSettings.map(({ label, state, onChange, disabled }) => (
                     <FormRow

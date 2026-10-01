@@ -40,6 +40,9 @@ interface IProps {
      */
     children?: React.ReactNode;
 
+    /** External style applied to the item card. */
+    containerStyle?: StyleType;
+
     /**
      * Item containing data to be rendered.
      */
@@ -100,7 +103,7 @@ export default class AvatarListItem extends Component<IProps> {
             <Container
                 onClick = { onPress }
                 onLongPress = { onLongPress }
-                style = { styles.listItem }
+                style = { [ styles.listItem, this.props.containerStyle || {} ] }
                 underlayColor = { UNDERLAY_COLOR }>
                 <Avatar
                     colorBase = { colorBase }

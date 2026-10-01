@@ -13,6 +13,7 @@ import {
     settingsTabBarOptions,
     tabBarOptions
 } from '../../../../../welcome/constants';
+import { isWelcomePageEnabled } from '../../../../../welcome/functions';
 import { screen } from '../../../routes';
 import SettingsNavigationContainer
     from '../../settings/components/SettingsNavigationContainer';
@@ -51,6 +52,7 @@ const WelcomePageTabs = ({ disabled, onListContainerPress, onSettingsScreenFocus
         ), []);
 
     const calendarEnabled = useSelector(isCalendarEnabled);
+    const brandedApp = useSelector(isWelcomePageEnabled);
 
     const CalendarListScreen = useCallback(() =>
         (
@@ -85,7 +87,7 @@ const WelcomePageTabs = ({ disabled, onListContainerPress, onSettingsScreenFocus
                 { RecentListScreen }
             </WelcomePage.Screen>
             {
-                calendarEnabled
+                calendarEnabled && !brandedApp
             && <WelcomePage.Screen
                 listeners = {{
                     tabPress: () => {

@@ -11,6 +11,9 @@ import SectionList from './SectionList';
 
 interface IProps {
 
+    /** Uses the Guangyu shell card and heading styles. */
+    branded?: boolean;
+
     /**
      * Indicates if the list is disabled or not.
      */
@@ -35,7 +38,7 @@ interface IProps {
      * Function to be invoked when a secondary action is performed on an item.
      * The item's ID is passed.
      */
-    onSecondaryAction: Function;
+    onSecondaryAction?: Function;
 
     /**
      * Function to override the rendered default empty list component.
@@ -187,7 +190,7 @@ class NavigateSectionList extends Component<IProps> {
      */
     _onSecondaryAction(id: string) {
         return () => {
-            this.props.onSecondaryAction(id);
+            this.props.onSecondaryAction?.(id);
         };
     }
 
@@ -214,12 +217,13 @@ class NavigateSectionList extends Component<IProps> {
 
         return (
             <NavigateSectionListItem
+                branded = { this.props.branded }
                 item = { item }
                 key = { key }
                 onLongPress = { url ? this._onLongPress(item) : undefined }
                 onPress = { url ? this._onPress(url) : undefined }
                 secondaryAction = {
-                    url ? undefined : this._onSecondaryAction(id) } />
+                    url || !this.props.onSecondaryAction ? undefined : this._onSecondaryAction(id) } />
         );
     }
 
@@ -235,7 +239,7 @@ class NavigateSectionList extends Component<IProps> {
 
         if (typeof onRefresh === 'function') {
             return (
-                <NavigateSectionListEmptyComponent />
+                <NavigateSectionListEmptyComponent branded = { this.props.branded } />
             );
         }
 
@@ -252,6 +256,7 @@ class NavigateSectionList extends Component<IProps> {
     _renderSectionHeader(section: SectionListSection) {
         return (
             <NavigateSectionListSectionHeader
+                branded = { this.props.branded }
                 section = { section } />
         );
     }

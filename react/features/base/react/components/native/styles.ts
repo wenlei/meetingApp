@@ -1,3 +1,4 @@
+import { brandPalette } from '../../../../internal-account/brandPalette.native';
 import BaseTheme from '../../../ui/components/BaseTheme.native';
 
 const OVERLAY_FONT_COLOR = 'rgba(255, 255, 255, 0.6)';
@@ -54,6 +55,17 @@ const SECTION_LIST_STYLES = {
         marginVertical: BaseTheme.spacing[2]
     },
 
+    brandedListItem: {
+        backgroundColor: brandPalette.surface,
+        borderColor: brandPalette.border,
+        borderRadius: 18,
+        borderWidth: 1,
+        marginHorizontal: 16,
+        marginVertical: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 10
+    },
+
     listItemDetails: {
         flex: 1,
         flexDirection: 'column',
@@ -66,9 +78,19 @@ const SECTION_LIST_STYLES = {
         fontSize: 14
     },
 
+    brandedListItemText: {
+        color: brandPalette.textMuted
+    },
+
     listItemTitle: {
         fontWeight: 'bold',
         fontSize: 16
+    },
+
+    brandedListItemTitle: {
+        color: brandPalette.blackMoss,
+        fontSize: 17,
+        fontWeight: '700'
     },
 
     listSection: {
@@ -85,6 +107,20 @@ const SECTION_LIST_STYLES = {
         fontSize: 14,
         fontWeight: 'normal',
         marginLeft: BaseTheme.spacing[2]
+    },
+
+    brandedListSection: {
+        backgroundColor: brandPalette.canvas,
+        paddingHorizontal: 16,
+        paddingBottom: 8,
+        paddingTop: 18
+    },
+
+    brandedListSectionText: {
+        color: brandPalette.blackMoss,
+        fontSize: 18,
+        fontWeight: '700',
+        marginLeft: 0
     },
 
     pullToRefresh: {
@@ -104,6 +140,13 @@ const SECTION_LIST_STYLES = {
     pullToRefreshText: {
         backgroundColor: 'transparent',
         color: OVERLAY_FONT_COLOR
+    },
+
+    brandedPullToRefreshText: {
+        color: brandPalette.textMuted,
+        fontSize: 15,
+        lineHeight: 24,
+        textAlign: 'center'
     },
 
     touchableView: {

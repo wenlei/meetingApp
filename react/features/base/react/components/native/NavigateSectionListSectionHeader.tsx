@@ -9,6 +9,9 @@ import styles from './styles';
 
 interface IProps {
 
+    /** Uses the Guangyu shell section treatment. */
+    branded?: boolean;
+
     /**
      * A section containing the data to be rendered.
      */
@@ -28,11 +31,20 @@ export default class NavigateSectionListSectionHeader extends Component<IProps> 
      * @returns {ReactElement}
      */
     override render() {
+        const { branded } = this.props;
         const { section } = this.props.section;
 
         return (
-            <Container style = { styles.listSection }>
-                <Text style = { styles.listSectionText as TextStyle }>
+            <Container
+                style = { [
+                    styles.listSection,
+                    branded ? styles.brandedListSection : {}
+                ] }>
+                <Text
+                    style = { [
+                        styles.listSectionText,
+                        branded && styles.brandedListSectionText
+                    ] as TextStyle[] }>
                     { section.title }
                 </Text>
             </Container>

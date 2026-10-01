@@ -12,6 +12,9 @@ import styles from './styles';
 
 interface IProps {
 
+    /** Uses the Guangyu shell card treatment. */
+    branded?: boolean;
+
     /**
      * Item containing data to be rendered.
      */
@@ -109,13 +112,16 @@ export default class NavigateSectionListItem extends Component<IProps> {
      * @returns {ReactElement}
      */
     override render() {
-        const { item, onLongPress, onPress, secondaryAction } = this.props;
+        const { branded, item, onLongPress, onPress, secondaryAction } = this.props;
 
         return (
             <AvatarListItem
+                containerStyle = { branded ? styles.brandedListItem : undefined }
                 item = { item }
+                linesStyle = { branded ? styles.brandedListItemText : undefined }
                 onLongPress = { onLongPress }
-                onPress = { onPress } >
+                onPress = { onPress }
+                titleStyle = { branded ? styles.brandedListItemTitle : undefined }>
                 { secondaryAction && this._renderSecondaryAction() }
             </AvatarListItem>
         );

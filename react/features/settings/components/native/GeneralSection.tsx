@@ -9,6 +9,7 @@ import Icon from '../../../base/icons/components/Icon';
 import { IconArrowRight } from '../../../base/icons/svg';
 import { updateSettings } from '../../../base/settings/actions';
 import Switch from '../../../base/ui/components/native/Switch';
+import { brandPalette } from '../../../internal-account/brandPalette.native';
 import { navigate } from '../../../mobile/navigation/components/settings/SettingsNavigationContainerRef';
 import { screen } from '../../../mobile/navigation/routes';
 
@@ -18,7 +19,8 @@ import styles from './styles';
 
 
 const GeneralSection = () => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const isChinese = i18n.language?.startsWith('zh') ?? true;
     const dispatch = useDispatch();
     const {
         disableSelfView,
@@ -35,7 +37,10 @@ const GeneralSection = () => {
     }, [ navigate, screen ]);
 
     return (
-        <FormSection>
+        <FormSection
+            defaultExpanded = { true }
+            label = { isChinese ? '通用' : 'General' }
+            summary = { isChinese ? '画面与语言' : 'Display and language' }>
             <FormRow label = 'videothumbnail.hideSelfView'>
                 <Switch
                     checked = { Boolean(disableSelfView) }
@@ -46,8 +51,9 @@ const GeneralSection = () => {
                     <TouchableHighlight onPress = { navigateToLanguageSelect }>
                         <View style = { styles.languageButton as ViewStyle }>
                             <Text
-                                style = { styles.languageText }>{t(`languages:${language}`)}</Text>
+                                style = { [ styles.languageText, styles.brandedLanguageText ] }>{t(`languages:${language}`)}</Text>
                             <Icon
+                                color = { brandPalette.blackMoss }
                                 size = { 24 }
                                 src = { IconArrowRight } />
                         </View>
