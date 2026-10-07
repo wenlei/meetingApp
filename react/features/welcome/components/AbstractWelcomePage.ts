@@ -80,6 +80,7 @@ interface IState {
  */
 export class AbstractWelcomePage<P extends IProps> extends Component<P, IState> {
     _mounted: boolean | undefined;
+    _joinInFlight = false;
 
     /**
      * Save room name into component's local state.
@@ -203,25 +204,46 @@ export class AbstractWelcomePage<P extends IProps> extends Component<P, IState> 
      * @returns {void}
      */
     _onJoin() {
-        const room = this.state.room || this.state.generatedRoomName;
+        if (this._joinInFlight) {
+            return;
+        }
+
+        const room = this._getRoomName();
 
         sendAnalytics(
             createWelcomePageEvent('clicked', 'joinButton', {
-                isGenerated: !this.state.room,
+                isGenerated: !this.state.room.trim(),
                 room
             }));
 
         if (room) {
+            this._joinInFlight = true;
             this.setState({ joining: true });
 
             // By the time the Promise of appNavigate settles, this component
             // may have already been unmounted.
-            const onAppNavigateSettled
-                = () => this._mounted && this.setState({ joining: false });
+            const onAppNavigateSettled = () => {
+                this._joinInFlight = false;
+                this._mounted && this.setState({ joining: false });
+            };
 
-            this.props.dispatch(appNavigate(room))
-                .then(onAppNavigateSettled, onAppNavigateSettled);
+            try {
+                this.props.dispatch(appNavigate(room))
+                    .then(onAppNavigateSettled, onAppNavigateSettled);
+            } catch (error) {
+                onAppNavigateSettled();
+                throw error;
+            }
         }
+    }
+
+    /**
+     * Resolves the room selected on the welcome page. Native adds an on-demand fallback.
+     *
+     * @returns {string} The room name or URL.
+     */
+    _getRoomName() {
+        return this.state.room || this.state.generatedRoomName;
     }
 
     /**

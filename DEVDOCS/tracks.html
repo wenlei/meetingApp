@@ -1,0 +1,171 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><title>Task Tracks (git-graph)</title><style>
+ *{box-sizing:border-box} html,body{height:100%;margin:0}
+ body{font-family:-apple-system,Segoe UI,'PingFang SC',sans-serif;background:#f6f7f9;color:#1c2330;display:flex;flex-direction:column}
+ header{padding:.55rem 1rem;background:#fff;border-bottom:1px solid #e6e8ec;display:flex;align-items:center;gap:.9rem;flex:0 0 auto}
+ header b{font-size:1.02rem} #title{color:#6b7488} #ts{color:#9aa4b2;font-size:.78rem;margin-left:auto}
+ #dot{width:9px;height:9px;border-radius:50%;background:#33b06a} #dot.pulse{background:#f0a500}
+ #main{flex:1 1 auto;display:flex;min-height:0}
+ #wrap{flex:1 1 auto;overflow:auto;position:relative;min-width:0}
+ aside#legend{flex:0 0 200px;background:#fff;border-right:1px solid #e6e8ec;padding:14px 16px;overflow:auto}
+ aside#legend h4{margin:.1rem 0 .7rem;font-size:.82rem;letter-spacing:.06em;text-transform:uppercase;color:#9aa4b2}
+ .lg{display:flex;align-items:center;gap:.5rem;padding:.34rem 0;font-size:.88rem}
+ .lg .sw{width:12px;height:12px;border-radius:3px;flex:0 0 auto} .lg .nm{flex:1}
+ .lg .pg{font-size:.78rem;color:#8a94a6;font-family:ui-monospace,monospace}
+ #menu{position:absolute;display:none;min-width:236px;max-width:340px;background:#fff;border:1px solid #d9dee7;border-radius:10px;box-shadow:0 12px 32px rgba(20,30,50,.20);padding:.7rem .85rem;font-size:.86rem;z-index:20;cursor:default}
+ #menu .bar{margin:-.7rem -.85rem .5rem;padding:.35rem .85rem;background:#f4f6f9;border-bottom:1px solid #e7eaef;border-radius:10px 10px 0 0;cursor:move;font-size:.74rem;color:#9aa4b2;user-select:none}
+ #menu h3{margin:.1rem 0 .3rem;font-size:.98rem} #menu .x{float:right;cursor:pointer;color:#9aa4b2}
+ #menu .chip{display:inline-block;padding:.05rem .5rem;border-radius:10px;font-size:.72rem;margin-right:.3rem;border:1px solid rgba(0,0,0,.08)}
+ #menu .muted{color:#7b8494;font-size:.79rem} #menu ul{list-style:none;padding:0;margin:.35rem 0}
+ #menu li{margin:.2rem 0;padding-left:1.2rem;text-indent:-1.2rem}
+ .st-done::before{content:"✓ ";color:#28a745} .st-now::before{content:"▶ ";color:#d99700}
+ .st-todo::before{content:"○ ";color:#9aa4b2} .st-blocked::before{content:"⛔ "}
+ .lk{color:#3b6fe0} text{user-select:none}
+</style></head><body><header><span id="dot"></span><b>Task Tracks</b><span id="title"></span><span id="ts"></span></header>
+<div id="main">
+  <aside id="legend"></aside>
+  <div id="wrap"><svg id="svg"></svg><div id="menu"></div></div>
+</div>
+<script>
+
+const STC={done:['#aedcbb','#2e9e54'],now:['#fdf0cc','#dd9b00'],todo:['#eceff3','#9aa4b2'],blocked:['#fbe0e0','#d0463a'],superseded:['#e6e8ec','#aab2bd']};
+const LANE=['#2f6fed','#e0732f','#7b4bd6','#1f9e6e','#c0392b','#0c8ca8','#b8860b'];
+const SLAB={done:'完成',now:'进行中',todo:'待做',blocked:'阻塞',superseded:'已被取代'};
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const $=id=>document.getElementById(id);
+let data=null,sel=null,lastRaw='',lastMenuH='',dragging=null;
+
+function topo(nodes){
+ const ids=new Set(nodes.map(n=>n.id)),indeg={},adj={},map={};
+ nodes.forEach(n=>{map[n.id]=n;indeg[n.id]=0;adj[n.id]=[];});
+ nodes.forEach(n=>(n.deps||[]).forEach(d=>{if(ids.has(d)){adj[d].push(n.id);indeg[n.id]++;}}));
+ const q=nodes.filter(n=>indeg[n.id]===0).map(n=>n.id),out=[];
+ while(q.length){const id=q.shift();out.push(id);adj[id].forEach(m=>{if(--indeg[m]===0)q.push(m);});}
+ nodes.forEach(n=>{if(out.indexOf(n.id)<0)out.push(n.id);});
+ return out.map(id=>map[id]);
+}
+const laneColor=(t,tracks)=>LANE[tracks.indexOf(t)%LANE.length];
+
+function menuHTML(n,tracks){
+ let h='<div class="bar">⠿ 拖拽移动<span class="x" onclick="hideMenu()">✕</span></div>';
+ h+='<h3>'+esc(n.title)+'</h3>';
+ h+='<span class="chip" style="background:'+(STC[n.status]?STC[n.status][0]:'#eee')+'">'+(SLAB[n.status]||n.status)+'</span>';
+ h+='<span class="chip" style="background:#fff;border-color:'+laneColor(n.track,tracks)+'">'+esc(data.tracks[n.track]||n.track)+(n.branch!=null?(' · 分支 '+esc(n.branch)):'')+'</span>';
+ if(n.supersedes) h+='<p class="muted">↺ 取代 '+esc(n.supersedes)+'(因基础假设变更)</p>';
+ if(n.note) h+='<p class="muted" style="font-style:italic;margin:.25rem 0">'+esc(n.note)+'</p>';
+ if(n.blocker) h+='<p>⛔ <b>卡在</b>:'+esc(n.blocker)+'</p>';
+ if(n.deps&&n.deps.length) h+='<p class="muted">依赖:'+esc(n.deps.join(', '))+'</p>';
+ const s=n.subtasks||[];
+ if(s.length){h+='<div class="muted" style="margin-top:.35rem">子任务 ('+s.filter(x=>x.status==='done').length+'/'+s.length+')</div>';
+   h+='<ul>'+s.map(x=>'<li class="st-'+(x.status||'todo')+'">'+esc(x.title||x)+'</li>').join('')+'</ul>';}
+ const lk=n.links||[]; if(lk.length) h+='<p class="muted">链接:'+lk.map(l=>'<span class="lk">'+esc(l)+'</span>').join('  ')+'</p>';
+ return h;
+}
+function hideMenu(){sel=null;lastMenuH='';$('menu').style.display='none';}
+function showMenu(id,clientX,clientY){
+ const n=(data.nodes||[]).find(x=>x.id===id);if(!n)return;sel=id;
+ const m=$('menu');m.innerHTML=menuHTML(n,Object.keys(data.tracks));lastMenuH=m.innerHTML;
+ const r=$('wrap').getBoundingClientRect();
+ let x=clientX-r.left+$('wrap').scrollLeft+14, y=clientY-r.top+$('wrap').scrollTop-6;
+ m.style.display='block';m.style.left=x+'px';m.style.top=Math.max(4,y)+'px';
+}
+function toggle(id,ev){ if(sel===id && $('menu').style.display==='block') hideMenu(); else showMenu(id,ev.clientX,ev.clientY); }
+
+function build(){
+ if(!data)return;
+ $('title').textContent=data.title?('· '+data.title):'';
+ const tracks=Object.keys(data.tracks), order=topo(data.nodes||[]);
+ const row={},byId={}; order.forEach((n,i)=>row[n.id]=i); (data.nodes||[]).forEach(n=>byId[n.id]=n);
+ // --- fork bubbles: allocate transient lanes (interval coloring), reused ---
+ const branches={};
+ order.forEach(n=>{ if(n.branch!=null){ (branches[n.branch]=branches[n.branch]||{track:n.track,rows:[]}).rows.push(row[n.id]); }});
+ const bIds=Object.keys(branches);
+ bIds.forEach(b=>{const r=branches[b].rows;branches[b].min=Math.min.apply(null,r);branches[b].max=Math.max.apply(null,r);});
+ // interval-color each track's OWN branches → local sub-lane (so a fork sits right next to its main line)
+ const trackLanes={};
+ tracks.forEach(t=>{ const bs=bIds.filter(b=>branches[b].track===t).sort((a,b)=>branches[a].min-branches[b].min);
+   const active=[]; let maxc=-1;
+   bs.forEach(b=>{const bb=branches[b];const used={};active.forEach(a=>{if(a.max>=bb.min)used[a.col]=1;});let c=0;while(used[c])c++;bb.localCol=c;active.push({max:bb.max,col:c});if(c>maxc)maxc=c;});
+   trackLanes[t]=maxc+1; });
+ // columns left→right: each track = its home column + its branch lanes, then the next track
+ const trackHome={}; let col=0;
+ tracks.forEach(t=>{ trackHome[t]=col; col+=1+trackLanes[t]; });
+ const NC=col;
+ const colOf=n=>(n.branch!=null ? trackHome[branches[n.branch].track]+1+branches[n.branch].localCol : trackHome[n.track]);
+ // milestones first → reserve a left margin for their tags so they don't overlap the graph
+ const MS=data.milestones||{}, PHASE=['#7a86a6','#7aa68f','#a6897a','#9a7aa6','#a69a7a'];
+ const msOrder=[]; order.forEach(n=>{ if(n.milestone!=null&&msOrder.indexOf(n.milestone)<0)msOrder.push(n.milestone); });
+ const msCol=m=>{const i=msOrder.indexOf(m);return (MS[m]&&MS[m].color)||PHASE[(i<0?0:i)%PHASE.length];};
+ const LM=msOrder.length?Math.max.apply(null,msOrder.map(m=>String((MS[m]&&MS[m].name)||m).length))*13+50:0;
+ const LW=48,RY0=96,RH=54, LX0=msOrder.length?(LM+24):46, GX=LX0+(NC-1)*LW, TX=GX+34;
+ const lx=t=>LX0+trackHome[t]*LW, cx=id=>LX0+colOf(byId[id])*LW, ny=id=>RY0+row[id]*RH;
+ const W=Math.max(TX+560,$('wrap').clientWidth-4), H=RY0+order.length*RH+24;
+ let s='<svg id="svg" width="'+W+'" height="'+H+'" font-family="-apple-system,system-ui,sans-serif">';
+ s+='<defs><marker id="mg" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#b6bdc9"/></marker></defs>';
+ order.forEach((n,i)=>{ if(i%2) s+='<rect x="0" y="'+(ny(n.id)-RH/2)+'" width="'+W+'" height="'+RH+'" fill="#eceff4" opacity="0.55"/>'; });
+ // milestone divider lines (git-tag style); tags live in the reserved left margin (no overlap with the chain)
+ msOrder.forEach(m=>{ const ns=order.filter(n=>n.milestone===m); if(!ns.length)return;
+   const yT=ny(ns[0].id)-RH/2+1, col=msCol(m), name=(MS[m]&&MS[m].name)||m;
+   s+='<line x1="'+(LX0-14)+'" y1="'+yT+'" x2="'+W+'" y2="'+yT+'" stroke="'+col+'" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.4"/>';
+   s+='<rect x="6" y="'+(yT-9)+'" rx="3" width="'+(String(name).length*13+30)+'" height="18" fill="'+col+'"/>';
+   s+='<text x="12" y="'+(yT+4)+'" font-size="11.5" font-weight="700" fill="#fff">🏁 '+esc(name)+'</text>'; });
+ // home lane lines (per workflow, non-branch nodes)
+ tracks.forEach(t=>{ const ns=order.filter(n=>n.branch==null&&n.track===t); if(ns.length<2)return;
+   const x=lx(t); s+='<line x1="'+x+'" y1="'+ny(ns[0].id)+'" x2="'+x+'" y2="'+ny(ns[ns.length-1].id)+'" stroke="'+laneColor(t,tracks)+'" stroke-width="2.5" opacity="0.85"/>'; });
+ // branch lane lines (transient bubble lanes)
+ bIds.forEach(b=>{ const ns=order.filter(n=>n.branch===b); if(ns.length<1)return;
+   const x=LX0+(trackHome[branches[b].track]+1+branches[b].localCol)*LW,lc=laneColor(branches[b].track,tracks);
+   if(ns.length>1) s+='<line x1="'+x+'" y1="'+ny(ns[0].id)+'" x2="'+x+'" y2="'+ny(ns[ns.length-1].id)+'" stroke="'+lc+'" stroke-width="2" opacity="0.8"/>'; });
+ // dependency curves wherever columns differ (fork-out / merge-back / cross-track)
+ order.forEach(n=>(n.deps||[]).forEach(d=>{ const dn=byId[d]; if(!dn||colOf(dn)===colOf(n))return;
+   const x1=cx(d),y1=ny(d),x2=cx(n.id),y2=ny(n.id),my=(y1+y2)/2, fork=(dn.branch!=null||n.branch!=null);
+   s+='<path d="M'+x1+','+y1+' C'+x1+','+my+' '+x2+','+my+' '+x2+','+y2+'" fill="none" stroke="'+laneColor(dn.track,tracks)+'" stroke-width="'+(fork?3:2)+'" opacity="'+(fork?0.95:0.6)+'" marker-end="url(#mg)"/>'; }));
+ // supersede links: faint dashed ↺ arrow from the superseded node to its rework
+ order.forEach(n=>{ if(n.supersedes&&byId[n.supersedes]){ const o=byId[n.supersedes],x1=cx(o.id),y1=ny(o.id),x2=cx(n.id),y2=ny(n.id),my=(y1+y2)/2;
+   s+='<path d="M'+x1+','+y1+' C'+x1+','+my+' '+x2+','+my+' '+x2+','+y2+'" fill="none" stroke="#9aa4b2" stroke-width="1.6" stroke-dasharray="2 4" opacity="0.9" marker-end="url(#mg)"/>';
+   s+='<text x="'+((x1+x2)/2+4)+'" y="'+(my-3)+'" font-size="10.5" fill="#8a94a6">↺ 取代</text>'; }});
+ // workflow name at the top (root) of each home lane, angled like a branch tip
+ tracks.forEach(t=>{ const x=lx(t),lc=laneColor(t,tracks);
+   s+='<line x1="'+x+'" y1="'+(RY0-22)+'" x2="'+x+'" y2="'+(RY0-6)+'" stroke="'+lc+'" stroke-width="2.5"/>';
+   s+='<circle cx="'+x+'" cy="'+(RY0-22)+'" r="4.5" fill="'+lc+'"/>';
+   s+='<text x="'+(x+8)+'" y="'+(RY0-26)+'" transform="rotate(-28 '+(x+8)+' '+(RY0-26)+')" font-size="12.5" font-weight="700" fill="'+lc+'">'+esc(data.tracks[t])+'</text>'; });
+ // nodes + titles
+ order.forEach(n=>{ const x=cx(n.id),y=ny(n.id),c=STC[n.status]||STC.todo,lc=laneColor(n.track,tracks),isC=(n.status==='now'),SUP=(n.status==='superseded');
+   if(isC) s+='<circle cx="'+x+'" cy="'+y+'" r="12" fill="none" stroke="#e0a800" stroke-width="2.5"/>';
+   s+='<g style="cursor:pointer" onclick="toggle(\''+n.id+'\',event)">';
+   s+='<circle cx="'+x+'" cy="'+y+'" r="'+(isC?8:7)+'" fill="'+c[0]+'" stroke="'+(SUP?'#aab2bd':lc)+'" stroke-width="2.5"'+(SUP?' stroke-dasharray="3 2"':'')+'/>';
+   const sub=n.subtasks||[],done=sub.filter(t=>t.status==='done').length;
+   const gl=n.status==='done'?'✓':n.status==='now'?'▶':n.status==='blocked'?'⛔':SUP?'↺':'○';
+   const gc=n.status==='done'?'#2e9e54':n.status==='now'?'#dd9b00':n.status==='blocked'?'#d0463a':SUP?'#aab2bd':'#9aa4b2';
+   s+='<text x="'+TX+'" y="'+(y+5)+'" font-size="13.5" fill="'+(SUP?'#aab2bd':'#222')+'"'+(SUP?' text-decoration="line-through"':'')+'><tspan fill="'+gc+'" font-weight="700" text-decoration="none">'+gl+'</tspan>  ';
+   if(n.branch!=null) s+='<tspan fill="'+lc+'" font-weight="700" text-decoration="none">⑂ </tspan>';
+   s+=esc(n.title);
+   if(sub.length) s+='<tspan fill="#9aa4b2" font-size="11" text-decoration="none">  ['+done+'/'+sub.length+']</tspan>';
+   s+='</text>';
+   if(n.note) s+='<text x="'+TX+'" y="'+(y+21)+'" font-size="11" font-style="italic" fill="#9aa4b2">'+esc(n.note)+'</text>';
+   s+='</g>';
+ });
+ s+='</svg>';
+ $('svg').outerHTML=s;
+ // legend (left): workflows + node status
+ let lg='<h4>工作流</h4>'+tracks.map(t=>{const ns=(data.nodes||[]).filter(n=>n.track===t),done=ns.filter(n=>n.status==='done').length;
+   return '<div class="lg"><span class="sw" style="background:'+laneColor(t,tracks)+'"></span><span class="nm">'+esc(data.tracks[t])+'</span><span class="pg">'+done+'/'+ns.length+'</span></div>';}).join('');
+ const SROWS=[['done','✓','完成'],['now','▶','进行中 · NOW 游标'],['todo','○','待做'],['blocked','⛔','阻塞'],['superseded','↺','已取代(划掉)']];
+ lg+='<h4 style="margin-top:1.2rem">节点状态</h4>'+SROWS.map(function(r){const k=r[0],g=r[1],lab=r[2],c=STC[k],ring=k==='now'?';box-shadow:0 0 0 2px #e0a800':'';
+   return '<div class="lg"><span class="sw" style="border-radius:50%;background:'+c[0]+';border:1.6px solid '+c[1]+ring+'"></span><span class="nm"><b style="color:'+c[1]+'">'+g+'</b> '+lab+'</span></div>';}).join('');
+ lg+='<div class="lg" style="color:#8a94a6;font-size:.78rem;margin-top:.5rem">圆点填色=状态 · 描边=所属工作流 · 金圈=游标</div>';
+ lg+='<div class="lg" style="color:#8a94a6;font-size:.78rem">曲线=依赖;子任务 fork 分支泡再合回</div>';
+ lg+='<div class="lg" style="color:#8a94a6;font-size:.78rem">返工=分支绕过划掉的老节点,下游改连返工节点;↺虚线=取代</div>';
+ $('legend').innerHTML=lg;
+}
+
+(function(){const m=$('menu');
+ m.addEventListener('mousedown',e=>{ if(e.target.classList.contains('x')||e.target.classList.contains('lk'))return;
+   dragging={ox:e.clientX-m.offsetLeft,oy:e.clientY-m.offsetTop};e.preventDefault();});
+ document.addEventListener('mousemove',e=>{ if(!dragging)return; m.style.left=(e.clientX-dragging.ox)+'px';m.style.top=Math.max(4,e.clientY-dragging.oy)+'px';});
+ document.addEventListener('mouseup',()=>dragging=null);
+})();
+window.addEventListener('resize',()=>{if(data)build();});
+
+const DATA={"title": "会议室 Android 故障整改", "tracks": {"release": "更新可靠性", "room": "随机会议", "roles": "会议主持权限", "handoff": "设备切换"}, "nodes": [{"id": "handoff-silent-close", "track": "handoff", "title": "设备替换后直接关闭会议 Activity", "status": "superseded", "note": "1.0.10 行为；用户要求明确设备切换说明，见 ADR-005"}, {"id": "handoff-result-notice", "track": "handoff", "title": "设备切换提示等待确认后退出", "status": "superseded", "deps": ["handoff-silent-close"], "supersedes": "handoff-silent-close", "branch": "ADR-005 提示修正", "note": "1.0.11 候选实测被迟到的 JVB 错误覆盖；未发布"}, {"id": "handoff-notice-cleanup", "track": "handoff", "title": "先断开旧端再显示结果，隔离迟到错误", "status": "done", "deps": ["handoff-result-notice"], "supersedes": "handoff-result-notice", "branch": "ADR-006 时序修正", "note": "已添加实际回调及退出顺序回归；普通错误不屏蔽"}, {"id": "handoff-notice-device", "track": "handoff", "title": "新提示构建、真机验收与发布", "status": "now", "deps": ["handoff-notice-cleanup"], "note": "1.0.12 两端安装完成，待指纹登录及双向 UI 验收；线上仍为 1.0.10"}, {"id": "handoff-source", "track": "handoff", "title": "注册账号按会议确认切换设备", "status": "superseded", "note": "ADR-004 替代信令入会即移除时机；历史方案未部署"}, {"id": "handoff-media", "track": "handoff", "title": "登录检测与图标主动切换，媒体就绪后提交", "status": "done", "deps": ["handoff-source"], "supersedes": "handoff-source", "branch": "ADR-004 两阶段切换", "note": "已含于 1.0.10；真实 Prosody 兼容修复见 BUG-004"}, {"id": "handoff-integration", "track": "handoff", "title": "真机与模拟器双向切换及匿名访客验收", "status": "done", "deps": ["handoff-media"], "note": "JVB connected 后移除旧端，访客保留；真实 30 秒候选超时和确认取消通过。不是两台真机或真人听感无缝证明"}, {"id": "handoff-release", "track": "handoff", "title": "新版本发布与服务端协调启用", "status": "done", "deps": ["handoff-integration"], "note": "2026-10-07 发布 1.0.10/24460200，全量启用注册账号设备切换；保留 1.0.9"}, {"id": "handoff-edge-cases", "track": "handoff", "title": "等候室、分组讨论、网络迁移与第二台真机", "status": "todo", "deps": ["handoff-release"], "note": "尚未验证，不能推广核心路径测试的结论"}, {"id": "authenticated-owner", "track": "roles", "title": "将已认证用户自动授予主持人", "status": "superseded", "note": "会议身份与主持权混淆；BUG-003、ADR-002"}, {"id": "host-role-enforcement", "track": "roles", "title": "独立主持登记与服务端权限拦截", "status": "done", "deps": ["authenticated-owner"], "supersedes": "authenticated-owner", "branch": "ADR-002 权限修复", "note": "2026-10-05 已部署；线上隔离房间越权拒绝和主持人结束均通过"}, {"id": "host-role-device", "track": "roles", "title": "预约及真机退出菜单验收", "status": "todo", "deps": ["host-role-enforcement"]}, {"id": "old-gate", "track": "release", "title": "模拟器和哈希通过即认为升级正常", "status": "superseded", "note": "真机反例推翻充分性假设；见 ADR-001"}, {"id": "phone-audit", "track": "release", "title": "PKT110 同文件不同 URI 对照", "status": "done", "deps": ["old-gate"], "note": "已装版本最终读回 1.0.8；产品修复尚未完成"}, {"id": "versioned-uri", "track": "release", "title": "版本化安装 URI 源码修复及本地回归", "status": "done", "deps": ["phone-audit"], "branch": "ADR-001 返工", "supersedes": "old-gate", "note": "已含于 1.0.9；真机升级归入下一验收节点"}, {"id": "device-gate", "track": "release", "title": "真机在线连续升级后关闭 BUG-001", "status": "now", "deps": ["versioned-uri"], "note": "PKT110 1.0.9 原生在线升级至 1.0.10 通过；后续不同版本、取消重试和第二台真机待覆盖"}, {"id": "room-diagnosis", "track": "room", "title": "首次留空无动作：代码级复现", "status": "done", "note": "初始随机名为空，挂载错过焦点事件，点击没有兜底"}, {"id": "room-fix", "track": "room", "title": "点击即时生成随机名及代码回归", "status": "done", "deps": ["room-diagnosis"], "note": "已含于线上 1.0.9，待真机验收"}, {"id": "room-device", "track": "room", "title": "真机会话恢复后留空入会", "status": "done", "deps": ["room-fix"], "note": "1.0.10 PKT110 指纹恢复后留空创建并作为 Wenlei 主持人入会；首次密码登录等路径未穷举"}]};
+data=DATA; build();
+</script></body></html>

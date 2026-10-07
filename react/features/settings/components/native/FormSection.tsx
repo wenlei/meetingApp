@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext } from 'react';
 import { WithTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useSelector } from 'react-redux';
@@ -41,10 +41,8 @@ export const SettingsAccordionContext = createContext(false);
  *
  * @returns {React$Element<any>}
  */
-function FormSection({ children, defaultExpanded = false, label, summary, t }: IProps) {
+function FormSection({ children, label, t }: IProps) {
     const brandedApp = useSelector(isWelcomePageEnabled);
-    const inSettingsAccordion = useContext(SettingsAccordionContext);
-    const accordion = brandedApp && inSettingsAccordion && Boolean(label);
     let rows = 0;
     const sectionChildren = React.Children.toArray(children).map(child => {
         if (!React.isValidElement(child) || child.type !== FormRow) {
@@ -63,9 +61,7 @@ function FormSection({ children, defaultExpanded = false, label, summary, t }: I
     if (brandedApp && label) {
         return (
             <MacWindowCard
-                defaultExpanded = { accordion ? defaultExpanded : true }
                 style = { styles.windowSection }
-                summary = { summary }
                 title = { t(label) }>
                 { sectionChildren }
             </MacWindowCard>

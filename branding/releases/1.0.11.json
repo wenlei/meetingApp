@@ -1,0 +1,20 @@
+{
+  "version": "1.0.11",
+  "versionCode": 24460300,
+  "status": "rejected-not-published",
+  "package": "com.guangyuxinneng.meeting",
+  "arm64Sha256": "a81bf90c4476c24390c1c2ae0505c8b44f6cfbb8aa4667ef81ba73f71cde576b",
+  "universalSha256": "711a95b83b3b0ff4415f47f0d012323e5f6c75d472a2076f51ecc8921125a129",
+  "bundleSha256": "95e31aaea868e74712d54a061045529f8260a5b8286f5bd217755256a8b88f75",
+  "signerSha256": "d9e7c3fb2351cd116859241526a0566f488d05ec768d6d09b0d0e9e10261a83a",
+  "checks": {
+    "regressionsAndTypecheck": "passed, including device-transfer notice and rejection of renamed old APK",
+    "apkIdentitySignatureAndBundle": "passed for arm64 and universal",
+    "serverHashes": "both immutable candidate APKs match local signed bytes",
+    "physicalDeviceUpgrade": "PKT110 1.0.10 native HTTPS download/check/install passed; installer and system both report 1.0.11 / 24460300; no app data reset or URI migration",
+    "emulator": "covered installed 1.0.10 with full APK; system reports 1.0.11; existing Wenlei session retained; joined isolated release111transfer20261007 with mic/camera muted",
+    "temporaryHarness": "removed from physical phone after update; target process replacement terminates instrumentation as expected",
+    "handoffNoticeUI": "FAILED: emulator showed AlertDialog then late JVB offerAnswerFailed replaced it with PageReloadDialog. Do not publish this candidate. Follow-up fixes cleanup order and ignores errors only from the replaced conference instance.",
+    "published": "no; latest manifest and public download page remain 1.0.10"
+  }
+}

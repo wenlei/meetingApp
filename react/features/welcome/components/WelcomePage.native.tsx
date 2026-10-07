@@ -1,3 +1,4 @@
+import { generateRoomWithoutSeparator } from '@jitsi/js-utils/random';
 import React from 'react';
 import {
     Animated,
@@ -61,6 +62,16 @@ interface IProps extends AbstractProps {
 class WelcomePage extends AbstractWelcomePage<IProps> {
     _onFieldBlur: (e: BlurEvent) => void;
     _onFieldFocus: (e: FocusEvent) => void;
+
+    /**
+     * Generates a room even when the account gate mounted after navigation focus.
+     * Placeholder animation is optional and must not control whether joining works.
+     *
+     * @returns {string} Entered name/URL, suggested name, or a fresh random name.
+     */
+    override _getRoomName() {
+        return this.state.room.trim() || this.state.generatedRoomName || generateRoomWithoutSeparator();
+    }
 
     /**
      * Constructor of the Component.

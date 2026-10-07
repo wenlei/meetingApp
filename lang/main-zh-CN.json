@@ -358,6 +358,7 @@
         "kickParticipantDialog": "你确定你要移除这位参会者吗？",
         "kickParticipantTitle": "移除这位参会者？",
         "kickSystemTitle": "你已被移出会议",
+        "meetingDeviceTransferred": "会议已切换到另一台设备。此设备已离开会议，账号仍保持登录。",
         "kickTitle": "{{participantDisplayName}}将你从会议中移除",
         "learnMore": "了解详情",
         "linkMeeting": "关联会议",

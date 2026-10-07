@@ -1,10 +1,11 @@
 import { appNavigate } from '../../app/actions.native';
 import { notifyConferenceFailed } from '../../conference/actions.native';
+import { handoffConferenceJoined, handoffConferenceLeft, handoffMediaReady } from '../../internal-account/handoffMedia.native';
 import { JitsiConferenceErrors } from '../lib-jitsi-meet';
 import { SET_NETWORK_INFO } from '../net-info/actionTypes';
 import MiddlewareRegistry from '../redux/MiddlewareRegistry';
 
-import { CONFERENCE_FAILED, CONFERENCE_JOINED, CONFERENCE_LEFT } from './actionTypes';
+import { CONFERENCE_CONNECTION_ESTABLISHED, CONFERENCE_FAILED, CONFERENCE_JOINED, CONFERENCE_LEFT } from './actionTypes';
 import { conferenceLeft } from './actions.native';
 import { TRIGGER_READY_TO_CLOSE_REASONS } from './constants';
 import './middleware.any';
@@ -24,11 +25,17 @@ MiddlewareRegistry.register(store => next => action => {
         const result = next(action);
 
         noteSessionNetwork(store);
+        handoffConferenceJoined(action.conference);
 
         return result;
     }
 
+    case CONFERENCE_CONNECTION_ESTABLISHED:
+        handoffMediaReady(action.conference);
+        break;
+
     case CONFERENCE_LEFT:
+        handoffConferenceLeft(action.conference);
         resetNetworkChangeState();
         break;
 
@@ -41,6 +48,7 @@ MiddlewareRegistry.register(store => next => action => {
     }
 
     case CONFERENCE_FAILED: {
+        handoffConferenceLeft(action.conference);
         const { getState } = store;
         const state = getState();
         const { notifyOnConferenceDestruction = true } = state['features/base/config'];

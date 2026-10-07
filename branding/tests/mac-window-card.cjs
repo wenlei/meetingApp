@@ -18,55 +18,16 @@ function load(relative, dependencies) {
     return exports;
 }
 
-function fixture(props = {}) {
-    let expanded;
-    const react = {
-        ...React,
-        useState(initial) {
-            expanded ??= initial;
-            return [ expanded, value => { expanded = value; } ];
-        },
-        useCallback: fn => fn
-    };
-    const Card = load('internal-account/MacWindowCard.native.tsx', {
-        react: { default: react, ...react },
-        'react-i18next': { useTranslation: () => ({ i18n: { language: 'zh-CN' } }) },
-        'react-native': { Pressable: 'Pressable', View: 'View', Text: 'Text', StyleSheet: { create: x => x, hairlineWidth: 0.5 } },
-        'react-native-svg': { default: 'Svg', Path: 'Path' },
-        './brandPalette.native': { brandPalette: {}, brandAlpha: {} }
-    }).default;
-    const render = () => Card({ title: '账号登录', children: 'FORM', ...props });
-    const controls = tree => tree.props.children[0].props.children;
-    return { render, controls };
-}
-
-let collapsed = 0;
-const f = fixture({ onCollapse: () => collapsed++ });
-let tree = f.render();
-assert.equal(tree.props.children[1], 'FORM');
-let [ close, title, spacer ] = f.controls(tree);
-assert.equal(close.props.accessibilityLabel, '关闭 账号登录');
-assert.equal(close.props.style.width, 44);
-assert.equal(spacer.type, 'View'); // No minimize/maximize button placeholders.
-close.props.onPress();
-tree = f.render();
-assert.equal(tree.props.children[1], false);
-assert.equal(collapsed, 1);
-[ close, title ] = f.controls(tree);
-assert.equal(close.props.disabled, true);
-assert.equal(title.props.accessibilityRole, 'button');
-title.props.onPress();
-assert.equal(f.render().props.children[1], 'FORM');
-
-let dismissed = 0;
-const modal = fixture({ onClose: () => dismissed++ });
-modal.controls(modal.render())[0].props.onPress();
-assert.equal(dismissed, 1);
-assert.equal(modal.render().props.children[1], 'FORM'); // Dialog owner handles visibility/cancellation.
-const busy = fixture({ disabled: true });
-assert.equal(busy.controls(busy.render())[0].props.disabled, true);
-const folded = fixture({ defaultExpanded: false });
-assert.equal(folded.render().props.children[1], false);
+const Card = load('internal-account/MacWindowCard.native.tsx', {
+    react: { default: React, ...React },
+    'react-native': { View: 'View', StyleSheet: { create: x => x } },
+    './brandPalette.native': { brandPalette: {}, brandAlpha: {} }
+}).default;
+const tree = Card({ title: '账号登录', children: 'FORM', glass: true });
+assert.equal(tree.type, 'View');
+assert.equal(tree.props.children, 'FORM');
+assert.equal(tree.props.accessibilityLabel, '账号登录');
+assert.equal(tree.props.onPress, undefined); // No close, collapse or header controls.
 
 const FormRow = () => null;
 const mockReact = { ...React, useContext: () => true };
@@ -86,4 +47,4 @@ const rows = section.props.children;
 assert.equal(rows.length, 5);
 assert.equal(rows.filter(row => Boolean(row.props.children[0])).length, 4);
 assert.ok(rows.every(row => row.props.children[1].type === FormRow)); // Separators precede rows, never trail the last.
-console.log('PASS: close/reopen, modal dismissal, busy protection, initial collapse, single close control, 5 rows / 4 separators');
+console.log('PASS: headerless card, content always visible, no close control, 5 rows / 4 separators');

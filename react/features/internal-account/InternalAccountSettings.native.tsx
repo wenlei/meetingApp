@@ -62,6 +62,7 @@ export default function InternalAccountSettings() {
     const [ updateStatus, setUpdateStatus ] = useState('');
     const [ updateManifest, setUpdateManifest ] = useState<IUpdateManifest>();
     const currentVersion = String(NativeModules.AppInfo?.version ?? '—');
+    const currentBuild = String(NativeModules.AppInfo?.buildNumber ?? '—');
 
     const refreshBiometric = useCallback(async () => {
         const state = await biometricLoginState();
@@ -173,7 +174,7 @@ export default function InternalAccountSettings() {
                     {isChinese ? '请先在设备设置中录入指纹或面容。'
                         : 'Set up fingerprint or face recognition in device settings first.'}
                 </Text>}
-                <FormRow label = { isChinese ? `版本 ${currentVersion}` : `Version ${currentVersion}` }>
+                <FormRow label = { isChinese ? `版本 ${currentVersion} (${currentBuild})` : `Version ${currentVersion} (${currentBuild})` }>
                     <Pressable
                         accessibilityRole = 'button'
                         onPress = { openUpdate }>

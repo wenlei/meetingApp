@@ -36,6 +36,7 @@ function fixture() {
             return credentials.get(service) || false;
         }
     };
+    function loadApi() {
     const exports = {};
     vm.runInNewContext(code, {
         exports,
@@ -48,6 +49,14 @@ function fixture() {
                 }
             };
             if (name === '../app/logger') return { default: { info() {} } };
+            if (name === './deviceHandoff.native') return {
+                deviceId: async () => 'biometric-test-device',
+                requestDeviceJoin: () => { throw Error('Biometric tests must not join a meeting'); }
+            };
+            if (name === './handoffMedia.native') return {
+                handoffConferenceLeft() {},
+                registerMediaHandoff() { throw Error('Biometric tests must not transfer a meeting'); }
+            };
             throw new Error(`Unexpected dependency: ${name}`);
         },
         fetch: async () => ({
@@ -59,7 +68,9 @@ function fixture() {
             })
         })
     });
-    return { api: exports, state, credentials };
+    return exports;
+    }
+    return { api: loadApi(), state, credentials, restart: loadApi };
 }
 
 (async () => {
@@ -69,6 +80,15 @@ function fixture() {
     assert.equal(f.state.prompts, 1);
     assert.equal(f.credentials.has(ordinary), false);
     assert.equal((await f.api.signInWithBiometrics()).username, 'alice');
+    const cold = f.restart();
+    const promptsAtBoot = f.state.prompts;
+    assert.equal(await cold.restoreSession(), null, 'Protected credentials must not bypass biometric access');
+    assert.equal(f.state.prompts, promptsAtBoot, 'Restoring state does not read the protected credential');
+    f.state.cancel = true;
+    await assert.rejects(cold.signInWithBiometrics());
+    assert.equal(f.credentials.has(protectedService), true, 'Cancellation keeps biometric preference available');
+    f.state.cancel = false;
+    assert.equal((await cold.signInWithBiometrics()).username, 'alice');
 
     await f.api.disableBiometricLogin();
     await f.api.signOut();

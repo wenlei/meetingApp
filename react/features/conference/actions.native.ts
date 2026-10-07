@@ -12,11 +12,12 @@ import { DISMISS_CALENDAR_NOTIFICATION } from './actionTypes';
  * @param {JitsiParticipant} participant - The {@link JitsiParticipant}
  * instance which initiated the kick event.
  * @param {?Function} submit - The function to execute after submitting the dialog.
+ * @param {boolean} deviceTransferred - Whether this is a confirmed device handoff, not a moderator kick.
  * @returns {Function}
  */
-export function notifyKickedOut(participant: any, submit?: Function) {
+export function notifyKickedOut(participant: any, submit?: Function, deviceTransferred = false) {
     return (dispatch: IStore['dispatch'], getState: IStore['getState']) => {
-        if (participant?.isReplaced?.()) {
+        if (!deviceTransferred && participant?.isReplaced?.()) {
             submit?.();
 
             return;
@@ -24,7 +25,8 @@ export function notifyKickedOut(participant: any, submit?: Function) {
 
         dispatch(openDialog('AlertDialog', AlertDialog, {
             contentKey: {
-                key: participant ? 'dialog.kickTitle' : 'dialog.kickSystemTitle',
+                key: deviceTransferred ? 'dialog.meetingDeviceTransferred'
+                    : participant ? 'dialog.kickTitle' : 'dialog.kickSystemTitle',
                 params: {
                     participantDisplayName: participant && getParticipantDisplayName(getState, participant.getId())
                 }

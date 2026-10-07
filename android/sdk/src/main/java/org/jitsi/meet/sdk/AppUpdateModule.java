@@ -37,6 +37,7 @@ class AppUpdateModule extends ReactContextBaseJavaModule {
     private volatile String verifiedHash;
     private volatile long verifiedSize;
     private volatile long verifiedVersion;
+    private volatile String verifiedVersionName;
 
     AppUpdateModule(ReactApplicationContext context) { super(context); }
 
@@ -73,6 +74,7 @@ class AppUpdateModule extends ReactContextBaseJavaModule {
                 URL url = new URL(manifest.getString("url"));
                 long size = (long) manifest.getDouble("size");
                 long version = (long) manifest.getDouble("versionCode");
+                String versionName = manifest.getString("version");
                 String hash = manifest.getString("sha256");
                 if (!"https".equals(url.getProtocol()) || !"113.46.187.140".equals(url.getHost())
                     || url.getPort() != 18001 || !url.getPath().startsWith("/android/")
@@ -82,8 +84,8 @@ class AppUpdateModule extends ReactContextBaseJavaModule {
                 }
                 File directory = partial.getParentFile();
                 if (!directory.isDirectory() && !directory.mkdirs()) { throw new IOException("storage_unavailable"); }
-                File ready = new File(directory, "update.apk");
-                if (ready.exists() && !ready.delete()) { throw new IOException("storage_unavailable"); }
+                UpdateArtifacts.pruneInstalled(directory, installedVersion());
+                File ready = UpdateArtifacts.readyFile(directory, version, hash);
                 for (int attempt = 1; attempt <= 3; attempt++) {
                     try {
                         if (cancelled) { throw new IOException("update_cancelled"); }
@@ -117,12 +119,13 @@ class AppUpdateModule extends ReactContextBaseJavaModule {
                         }
                         if (cancelled) { throw new IOException("update_cancelled"); }
                         progress("verifying", received, size, attempt);
-                        verifyFile(partial, size, hash, version);
+                        verifyFile(partial, size, hash, version, versionName);
                         if (cancelled) { throw new IOException("update_cancelled"); }
-                        if (!partial.renameTo(ready)) { throw new IOException("storage_unavailable"); }
+                        UpdateArtifacts.promote(partial, ready, size, hash);
                         verifiedSize = size;
                         verifiedHash = hash;
                         verifiedVersion = version;
+                        verifiedVersionName = versionName;
                         verifiedFile = ready;
                         progress("ready", size, size, attempt);
                         promise.resolve(null);
@@ -151,13 +154,14 @@ class AppUpdateModule extends ReactContextBaseJavaModule {
     }
 
     @SuppressWarnings("deprecation")
-    private void verifyFile(File file, long size, String hash, long version) throws Exception {
+    private void verifyFile(File file, long size, String hash, long version, String versionName) throws Exception {
         UpdateIntegrity.verify(file, size, hash);
         PackageManager manager = getReactApplicationContext().getPackageManager();
         PackageInfo archive = manager.getPackageArchiveInfo(file.getAbsolutePath(), PackageManager.GET_SIGNATURES);
         PackageInfo installed = manager.getPackageInfo(getReactApplicationContext().getPackageName(), PackageManager.GET_SIGNATURES);
         if (archive == null || !installed.packageName.equals(archive.packageName)
             || archive.versionCode != version || archive.versionCode <= installed.versionCode
+            || versionName == null || !versionName.equals(archive.versionName)
             || archive.signatures == null || !Arrays.equals(installed.signatures, archive.signatures)) {
             throw new SecurityException("update_identity_mismatch");
         }
@@ -174,7 +178,7 @@ class AppUpdateModule extends ReactContextBaseJavaModule {
             try {
                 File ready = verifiedFile;
                 if (ready == null) { throw new IOException("update_not_verified"); }
-                verifyFile(ready, verifiedSize, verifiedHash, verifiedVersion);
+                verifyFile(ready, verifiedSize, verifiedHash, verifiedVersion, verifiedVersionName);
                 getReactApplicationContext().runOnUiQueueThread(() -> {
                     try {
                         ReactApplicationContext context = getReactApplicationContext();

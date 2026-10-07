@@ -1,7 +1,7 @@
 import { feraPrismEngineSource } from './feraPrismEngine.generated';
 
 // The values are the user's reference: 20 strips (10 mirrored pairs),
-// Speed 512 (2x version 1.0.5; 8x the original 64), Soften 15px and Noise 30%.
+// App speed 768, independently tuned from web; Soften 15px and Noise 30%.
 const recipe = require('../../../branding/login-prism-recipe.json');
 
 /**
@@ -48,7 +48,9 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#26483D}
   }
   function frame(now) {
     if (!active || document.hidden || reduced) { previous = null; request = 0; return; }
-    if (previous !== null) stats.elapsed += Math.min(0.05,(now - previous)/1000);
+    // Count foreground elapsed time even when the WebView drops frames.
+    // resume() resets previous after backgrounding, avoiding hidden-time jumps.
+    if (previous !== null) stats.elapsed += Math.max(0,(now - previous)/1000);
     previous = now;
     paint();
     request = requestAnimationFrame(frame);

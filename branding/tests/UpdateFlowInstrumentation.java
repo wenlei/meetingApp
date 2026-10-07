@@ -56,10 +56,53 @@ public class UpdateFlowInstrumentation extends Instrumentation {
             });
             java.lang.reflect.Method download = moduleType.getMethod("download", readableMap, promiseType);
             download.setAccessible(true);
-            download.invoke(module, manifest, downloadPromise);
-            if (!downloaded.await(5, TimeUnit.MINUTES)) { throw new Exception("Download timed out"); }
-            if (downloadError[0] != null) { throw new Exception(downloadError[0]); }
-            result.putString("download", "PASS: HTTPS download and size/hash/package/signer/version verification");
+            if ("true".equals(arguments.getString("reuseDownload"))) {
+                // Preserve the verified network download across a test-runner restart.
+                // install() below independently verifies these bytes and their package identity again.
+                String fileName = "update-" + arguments.getString("versionCode") + "-"
+                    + arguments.getString("sha256").toLowerCase(java.util.Locale.ROOT) + ".apk";
+                java.io.File cached = new java.io.File(context.getCacheDir(), "updates/" + fileName);
+                if (!cached.exists()) {
+                    // Migration tests can still target the legacy updater.
+                    cached = new java.io.File(context.getCacheDir(), "updates/update.apk");
+                }
+                Object[][] restored = {
+                    {"verifiedFile", cached},
+                    {"verifiedSize", Long.valueOf(arguments.getString("size"))},
+                    {"verifiedHash", arguments.getString("sha256")},
+                    {"verifiedVersion", Long.valueOf(arguments.getString("versionCode"))}
+                };
+                for (Object[] field : restored) {
+                    java.lang.reflect.Field value = moduleType.getDeclaredField((String) field[0]);
+                    value.setAccessible(true);
+                    value.set(module, field[1]);
+                }
+                try {
+                    java.lang.reflect.Field versionName = moduleType.getDeclaredField("verifiedVersionName");
+                    versionName.setAccessible(true);
+                    versionName.set(module, arguments.getString("version"));
+                } catch (NoSuchFieldException olderApp) { /* 1.0.7 has no version-name field. */ }
+                result.putString("download", "Previously verified HTTPS download reused; install() revalidates it");
+            } else {
+                download.invoke(module, manifest, downloadPromise);
+                if (!downloaded.await(5, TimeUnit.MINUTES)) { throw new Exception("Download timed out"); }
+                if (downloadError[0] != null) { throw new Exception(downloadError[0]); }
+                result.putString("download", "PASS: HTTPS download and size/hash/package/signer/version verification");
+            }
+            if ("true".equals(arguments.getString("versionedHandoff"))) {
+                // Explicit legacy migration test only; production install() still revalidates all bytes.
+                java.lang.reflect.Field fileField = moduleType.getDeclaredField("verifiedFile");
+                fileField.setAccessible(true);
+                java.io.File legacy = (java.io.File) fileField.get(module);
+                java.io.File unique = new java.io.File(legacy.getParentFile(), "update-"
+                    + arguments.getString("versionCode") + "-"
+                    + arguments.getString("sha256").toLowerCase(java.util.Locale.ROOT) + ".apk");
+                if (!legacy.equals(unique)) {
+                    java.nio.file.Files.copy(legacy.toPath(), unique.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                    fileField.set(module, unique);
+                }
+                result.putString("legacyMigration", "Versioned handoff of the same verified download; not stock legacy behavior");
+            }
             CountDownLatch installed = new CountDownLatch(1);
             String[] installResult = new String[1];
             Object installPromise = Proxy.newProxyInstance(loader, new Class<?>[]{promiseType}, (proxy, method, values) -> {
@@ -74,6 +117,10 @@ public class UpdateFlowInstrumentation extends Instrumentation {
             result.putString("install", installResult[0]);
             if (!"installer".equals(installResult[0])) { throw new Exception("Installer not opened: " + installResult[0]); }
             result.putString("result", "PASS");
+            sendStatus(0, result);
+            // Finishing instrumentation kills the target app and can dismiss its installer.
+            // Keep it alive for UI confirmation; package replacement will end the process.
+            if ("true".equals(arguments.getString("waitForInstall"))) { Thread.sleep(180000); }
             finish(-1, result);
         } catch (Throwable error) {
             result.putString("error", error.toString());

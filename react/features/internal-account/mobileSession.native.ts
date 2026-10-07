@@ -3,6 +3,9 @@ import * as Keychain from 'react-native-keychain';
 
 import logger from '../app/logger';
 
+import { deviceId, requestDeviceJoin } from './deviceHandoff.native';
+import { handoffConferenceLeft, registerMediaHandoff } from './handoffMedia.native';
+
 const ACCOUNT_URL = 'https://113.46.187.140:18003';
 
 export const MEETING_URL = 'https://113.46.187.140:18001';
@@ -74,6 +77,7 @@ function userFrom(value: unknown): IAccountUser {
 }
 
 async function clearLocalSession() {
+    handoffConferenceLeft();
     setCurrentSession(null);
     restorePromise = null;
     await Promise.all([
@@ -296,13 +300,27 @@ export async function roomURL(room: string): Promise<string> {
     if (!session) {
         throw new Error('请先登录内部账号。');
     }
-    const response = await fetch(`${MEETING_URL}/account/api/mobile-token`, {
-        body: JSON.stringify({ room }),
-        headers: {
-            Authorization: `Bearer ${session.token}`,
-            'Content-Type': 'application/json'
-        },
-        method: 'POST'
+    const response = await requestDeviceJoin(room, async body => {
+        // A delayed confirmation must not use an account that has signed out.
+        if (currentSession?.token !== session.token) {
+            throw new Error('登录状态已变化，请重新进入会议。');
+        }
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+
+        try {
+            return await fetch(`${MEETING_URL}/account/api/mobile-token`, {
+                body: JSON.stringify(body),
+                headers: {
+                    Authorization: `Bearer ${session.token}`,
+                    'Content-Type': 'application/json'
+                },
+                method: 'POST',
+                signal: controller.signal
+            });
+        } finally {
+            clearTimeout(timeout);
+        }
     });
 
     if (response.status === 401) {
@@ -317,8 +335,91 @@ export async function roomURL(room: string): Promise<string> {
     if (typeof data.token !== 'string') {
         throw new Error('会议凭证无效，请稍后再试。');
     }
+    if (data.handoff_pending && typeof data.device_ticket === 'string') {
+        const ticket = data.device_ticket;
+        const signal = async (action: string) => {
+            if (action === 'ready' && currentSession?.token !== session.token) {
+                throw new Error('登录状态已变化。');
+            }
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 8000);
+
+            try {
+                const result = await fetch(`${MEETING_URL}/account/api/device-${action}`, {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${session.token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ room, ticket }),
+                    signal: controller.signal
+                });
+
+                if (!result.ok) {
+                    throw new Error('设备切换确认失败。');
+                }
+            } finally {
+                clearTimeout(timeout);
+            }
+        };
+
+        registerMediaHandoff({
+            room,
+            commit: async () => {
+                try {
+                    await signal('ready');
+                } catch (_) {
+                    // A lost acknowledgement may follow a successful commit.
+                    // Repeating the same ticket is server-side idempotent.
+                    await signal('ready');
+                }
+            },
+            cancel: () => signal('cancel'),
+            error: () => queueAccountError('设备切换尚未确认，请检查网络后重试。')
+        });
+    } else {
+        handoffConferenceLeft();
+    }
 
     return `${MEETING_URL}/${room}?jwt=${encodeURIComponent(data.token)}`;
+}
+
+export interface IActiveMeetingDevice {
+    device: string;
+    is_local: boolean;
+    replace: string;
+    room: string;
+    switching: boolean;
+}
+
+export async function activeMeetingDevices(): Promise<IActiveMeetingDevice[]> {
+    const session = await restoreSession();
+
+    if (!session) {
+        return [];
+    }
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    let response;
+
+    try {
+        response = await fetch(`${MEETING_URL}/account/api/devices?device_id=${encodeURIComponent(await deviceId())}`, {
+            headers: { Authorization: `Bearer ${session.token}` },
+            signal: controller.signal
+        });
+    } finally {
+        clearTimeout(timeout);
+    }
+
+    if (!response.ok) {
+        throw new Error('暂时无法检查其他设备。');
+    }
+    const data = await responseBody(response);
+
+    if (!Array.isArray(data.devices)) {
+        throw new Error('设备状态无效。');
+    }
+
+    return data.devices.filter((item): item is IActiveMeetingDevice => Boolean(item && typeof item === 'object'
+        && typeof item.room === 'string' && ROOM_RE.test(item.room) && typeof item.replace === 'string'
+        && typeof item.device === 'string' && typeof item.is_local === 'boolean' && typeof item.switching === 'boolean'));
 }
 
 export async function meetingReservations(): Promise<IMeetingReservation[]> {

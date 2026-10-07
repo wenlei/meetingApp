@@ -4,7 +4,6 @@ import {
     AccessibilityInfo,
     ActivityIndicator,
     Image,
-    Keyboard,
     KeyboardAvoidingView,
     Platform,
     Pressable,
@@ -22,6 +21,7 @@ import logger from '../app/logger';
 import { updateSettings } from '../base/settings/actions';
 import WelcomePage from '../welcome/components/WelcomePage';
 
+import ActiveDeviceHandoff from './ActiveDeviceHandoff.native';
 import LoginPrismBackground from './LoginPrismBackground.native';
 import MacWindowCard from './MacWindowCard.native';
 import { promptAppUpdate } from './appUpdate.native';
@@ -137,6 +137,8 @@ const styles = StyleSheet.create({
     },
     logo: { borderRadius: 14, height: 50, width: 50 },
     subtitle: { color: colors.muted, fontSize: 14, lineHeight: 21 },
+    biometricPrompt: { alignItems: 'center', gap: 16, paddingVertical: 24 },
+    biometricRetry: { color: colors.dark, fontSize: 14, paddingVertical: 14, textAlign: 'center' },
     welcome: { backgroundColor: colors.background, flex: 1 }
 });
 
@@ -163,12 +165,15 @@ export default function InternalWelcomePage({ navigation }: IProps) {
     const [ busy, setBusy ] = useState(false);
     const [ error, setError ] = useState(takeAccountError() || '');
     const [ biometricEnabled, setBiometricEnabled ] = useState(false);
+    const [ passwordFallback, setPasswordFallback ] = useState(false);
     const [ reduceMotion, setReduceMotion ] = useState(false);
     const biometricAttempted = useRef(false);
 
     useEffect(() => {
-        promptAppUpdate(isChinese);
-    }, [ isChinese ]);
+        if (user) {
+            promptAppUpdate(isChinese);
+        }
+    }, [ isChinese, user ]);
 
     useEffect(() => {
         let mounted = true;
@@ -201,14 +206,9 @@ export default function InternalWelcomePage({ navigation }: IProps) {
     useEffect(() => {
         let mounted = true;
 
-        biometricLoginState().then(state => {
+        Promise.all([ restoreSession(), biometricLoginState() ]).then(([ session, state ]) => {
             if (mounted) {
                 setBiometricEnabled(Boolean(state.type && state.enabled));
-            }
-        }).catch(cause => logger.error('Unable to read biometric state:', cause));
-
-        restoreSession().then(session => {
-            if (mounted) {
                 setUser(session?.user || null);
                 if (session) {
                     dispatch(updateSettings({ displayName: session.user.display_name }));
@@ -231,7 +231,14 @@ export default function InternalWelcomePage({ navigation }: IProps) {
         };
     }, [ dispatch, enterPendingRoom ]);
 
-    useEffect(() => subscribeAccountSession(setUser), []);
+    useEffect(() => subscribeAccountSession(account => {
+        setUser(account);
+        if (!account) {
+            // Logout / expiry revokes the protected token, so password is required.
+            setBiometricEnabled(false);
+            setPasswordFallback(true);
+        }
+    }), []);
 
     useEffect(() => {
         navigation.setOptions({ headerShown: Boolean(user), headerTitle: copy.brand });
@@ -265,11 +272,13 @@ export default function InternalWelcomePage({ navigation }: IProps) {
     }, [ username, password, enterAs, refreshBiometricState ]);
 
     const biometricLogin = useCallback(async () => {
+        setPasswordFallback(false);
         setBusy(true);
         setError('');
         try {
             enterAs(await signInWithBiometrics());
         } catch (cause) {
+            setPasswordFallback(true);
             setError(cause instanceof Error ? cause.message : '登录失败，请稍后再试。');
             await refreshBiometricState();
         } finally {
@@ -285,14 +294,11 @@ export default function InternalWelcomePage({ navigation }: IProps) {
     }, [ biometricEnabled, biometricLogin, loading, user ]);
 
     const displayedError = isChinese ? error : englishErrors[error] || error;
-    const collapseLogin = useCallback(() => {
-        Keyboard.dismiss();
-        setPassword('');
-    }, []);
 
     if (user) {
         return (
             <View style = { styles.welcome }>
+                <ActiveDeviceHandoff key = { user.id } />
                 { error ? <Text style = { styles.error }>{ displayedError }</Text> : null }
                 <WelcomePage navigation = { navigation } />
             </View>
@@ -310,9 +316,7 @@ export default function InternalWelcomePage({ navigation }: IProps) {
                     keyboardShouldPersistTaps = 'handled'
                     showsVerticalScrollIndicator = { false }>
                     <MacWindowCard
-                        disabled = { busy || loading }
                         glass = { true }
-                        onCollapse = { collapseLogin }
                         title = { isChinese ? '账号登录' : 'Account login' }>
                         <View style = { styles.cardContent }>
                             <View style = { styles.brandBlock }>
@@ -328,7 +332,14 @@ export default function InternalWelcomePage({ navigation }: IProps) {
                             </View>
                             { loading
                                 ? <ActivityIndicator color = { colors.green } />
-                                : <>
+                                : biometricEnabled && !passwordFallback
+                                    ? <View style = { styles.biometricPrompt }>
+                                        <ActivityIndicator color = { colors.green } />
+                                        <Text style = { styles.subtitle }>{isChinese
+                                            ? '请通过指纹或面容验证身份，取消后可使用密码。'
+                                            : 'Use biometrics to sign in. Cancel to use your password.'}</Text>
+                                    </View>
+                                    : <>
                                     <Text style = { styles.label }>{ copy.username }</Text>
                                     <TextInput
                                         autoCapitalize = 'none'
@@ -354,6 +365,12 @@ export default function InternalWelcomePage({ navigation }: IProps) {
                                         style = { styles.button }>
                                         <Text style = { styles.buttonText }>{ busy ? copy.loggingIn : copy.login }</Text>
                                     </Pressable>
+                                    {biometricEnabled && <Pressable
+                                        accessibilityRole = 'button'
+                                        disabled = { busy }
+                                        onPress = { biometricLogin }>
+                                        <Text style = { styles.biometricRetry }>{isChinese ? '重试指纹 / 面容识别' : 'Try biometrics again'}</Text>
+                                    </Pressable>}
                                 </> }
                         </View>
                     </MacWindowCard>

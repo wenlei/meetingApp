@@ -1,0 +1,27 @@
+{
+  "version": "1.0.10",
+  "versionCode": 24460200,
+  "publishedDate": "2026-10-07",
+  "package": "com.guangyuxinneng.meeting",
+  "arm64Sha256": "f53d0f700fa416d401cc1a48223443d4a73fea423b08e9785cc5f39f99866374",
+  "universalSha256": "4b408663e0ab1b5c4b83258259e96ff595bb6c4ea84cc60111cddba7a705fb23",
+  "bundleSha256": "88a894587004bbcbbf31faa9d329e610419267713dfbdb980732fa06c04f3657",
+  "signerSha256": "d9e7c3fb2351cd116859241526a0566f488d05ec768d6d09b0d0e9e10261a83a",
+  "checks": {
+    "regressionsAndTypecheck": "passed; 28 bridge/role tests, 2 password tests, native/web handoff and Lua regressions",
+    "apkIdentityAndSignature": "passed for arm64 and universal",
+    "serverHashesPublicManifestAndAliases": "passed",
+    "physicalDeviceUpgrade": "PKT110 installed 1.0.9: instrumentation invoked unchanged native HTTPS download/check/install; system installer and dumpsys confirmed 1.0.10/24460200; no URI migration or app data reset",
+    "settings": "physical phone shows 1.0.10 (24460200), latest version; Wenlei session and biometric login retained",
+    "emulator": "same signed candidate installed, Wenlei session retained",
+    "deviceHandoff": "physical phone and emulator switched in both directions; JVB connected; old endpoint removed only after ready; graceful flip_device signal verified",
+    "anonymousGuest": "browser stayed connected as participant during handoff",
+    "timeout": "real XMPP candidate without media-ready removed after 30 seconds; existing phone and anonymous guest remained",
+    "cancel": "phone cancelled replacement confirmation, old emulator remained in conference",
+    "randomMeeting": "physical phone blank input created and joined generated room with Wenlei moderator identity after global backend rollout",
+    "notVerified": "second physical device, perceptual audio continuity, lobby expiry/breakouts/network migration, normal old-client latest prompt discovery, repeated distinct-version upgrades"
+  },
+  "metadataBackup": "/opt/jitsi-download/backups/24460200-before-1.0.10",
+  "backendBackup": "/opt/jitsi-device-backups/20261007-110230",
+  "backend": "global registered-account rollout; private 127.0.0.1:18033; guest devices unrestricted; persistent room ownership retained"
+}

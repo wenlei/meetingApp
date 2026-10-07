@@ -7,11 +7,12 @@ if (googleServicesEnabled) {
     apply plugin: 'com.google.firebase.crashlytics'
 }
 
-// Use the number of seconds/10 since Jan 1 2019 as the versionCode.
-// This lets us upload a new build at most every 10 seconds for the
-// next ~680 years.
-// https://stackoverflow.com/a/38643838
-def vcode = (int) (((new Date().getTime() / 1000) - 1546297200) / 10)
+// The APK and publication metadata share one explicit release identity.
+def meetingRelease = new groovy.json.JsonSlurper().parse(file('../../branding/android-release.json'))
+if ((project.hasProperty('meetingVersionName') && project.property('meetingVersionName') != meetingRelease.version)
+    || (project.hasProperty('meetingVersionCode') && project.property('meetingVersionCode').toInteger() != meetingRelease.versionCode)) {
+    throw new GradleException('Update branding/android-release.json; command-line release overrides must match it.')
+}
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
@@ -19,8 +20,8 @@ android {
 
     defaultConfig {
         applicationId 'com.guangyuxinneng.meeting'
-        versionCode project.hasProperty('meetingVersionCode') ? project.property('meetingVersionCode').toInteger() : vcode
-        versionName project.findProperty('meetingVersionName') ?: '1.0.6'
+        versionCode meetingRelease.versionCode
+        versionName meetingRelease.version
 
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion

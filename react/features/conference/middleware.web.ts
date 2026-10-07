@@ -34,8 +34,9 @@ MiddlewareRegistry.register(store => next => action => {
             = participant && getParticipantDisplayName(store.getState, participant.getId());
 
         dispatch(hangup(true,
-            participantDisplayName ? i18next.t('dialog.kickTitle', { participantDisplayName })
-                : i18next.t('dialog.kickSystemTitle'),
+            action.deviceTransferred === true ? i18next.t('dialog.meetingDeviceTransferred')
+                : participantDisplayName ? i18next.t('dialog.kickTitle', { participantDisplayName })
+                    : i18next.t('dialog.kickSystemTitle'),
             true));
 
         return result;

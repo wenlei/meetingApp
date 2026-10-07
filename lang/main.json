@@ -409,6 +409,7 @@
         "kickParticipantDialog": "Are you sure you want to kick this participant?",
         "kickParticipantTitle": "Kick this participant?",
         "kickSystemTitle": "Ouch! You were kicked out of the meeting",
+        "meetingDeviceTransferred": "The meeting has moved to another device. This device has left the meeting. You are still signed in.",
         "kickTitle": "Ouch! {{participantDisplayName}} kicked you out of the meeting",
         "learnMore": "Learn more",
         "link": "Link",

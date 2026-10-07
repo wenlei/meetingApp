@@ -1,0 +1,20 @@
+{
+  "version": "1.0.12",
+  "versionCode": 24460400,
+  "status": "candidate-awaiting-handoff-ui",
+  "package": "com.guangyuxinneng.meeting",
+  "arm64Sha256": "48a836ab29c0647b5ff7aaf64fcdbf05c80287ce7220fc4d149283acb2837e43",
+  "universalSha256": "9fec0328bdde45ee676cc9a7a7b7954bfb6642fcc040c4de64bf382667d6ed74",
+  "bundleSha256": "d82e5c88471c12dcb02c67b64e5893dc8d795ceff677b9dca6a2db8c3d78725b",
+  "signerSha256": "d9e7c3fb2351cd116859241526a0566f488d05ec768d6d09b0d0e9e10261a83a",
+  "checks": {
+    "regressionsAndTypecheck": "passed, including replaced-conference late-error guard, disconnect/navigation/notice ordering, APK identity, web/native types and targeted ESLint",
+    "apkIdentitySignatureAndBundle": "passed for arm64 and universal",
+    "serverHashes": "both immutable candidate APKs match local signed bytes",
+    "physicalDeviceUpgrade": "PKT110 1.0.11 native HTTPS download/check/install passed; system reports 1.0.12 / 24460400; no app data reset or URI migration. Installer intermediate version screen was not captured this time.",
+    "emulator": "full APK upgrade passed; system reports 1.0.12; existing Wenlei session retained; joined isolated release112transfer20261007 with mic/camera muted",
+    "handoffNoticeUI": "pending user biometric login and two-way test",
+    "published": "no; public latest remains 1.0.10"
+  },
+  "supersedesRejectedCandidate": "1.0.11 was not published: late offerAnswerFailed covered the transfer notice. See ADR-006."
+}

@@ -17,6 +17,7 @@ export interface IUpdateManifest {
 
 export interface IUpdateResult {
     currentVersion: string;
+    currentVersionCode?: number;
     hasUpdate: boolean;
     manifest?: IUpdateManifest;
 }
@@ -145,7 +146,7 @@ export async function checkAppUpdate(): Promise<IUpdateResult> {
         ? Number(manifest.versionCode) > currentVersionCode
         : compareVersions(manifest.version, currentVersion) > 0;
 
-    return { currentVersion, hasUpdate, manifest };
+    return { currentVersion, currentVersionCode, hasUpdate, manifest };
 }
 
 /**
@@ -173,8 +174,8 @@ export async function promptAppUpdate(isChinese: boolean): Promise<void> {
         Alert.alert(
             isChinese ? '发现新版本' : 'Update available',
             isChinese
-                ? `光域新能会议室 ${result.manifest.version} 已发布。现在下载更新吗？`
-                : `Guangyu Meeting ${result.manifest.version} is available. Download it now?`,
+                ? `当前版本 ${result.currentVersion} (${result.currentVersionCode})\n新版本 ${result.manifest.version} (${versionCode})\n现在下载更新吗？`
+                : `Installed: ${result.currentVersion} (${result.currentVersionCode})\nAvailable: ${result.manifest.version} (${versionCode})\nDownload the update now?`,
             [
                 { text: isChinese ? '稍后' : 'Later', style: 'cancel' },
                 {

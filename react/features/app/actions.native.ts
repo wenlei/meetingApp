@@ -21,6 +21,7 @@ import {
     parseURIString,
     toURLString
 } from '../base/util/uri';
+import { DeviceSwitchCancelled } from '../internal-account/deviceHandoff.native';
 import {
     MEETING_URL,
     queueAccountError,
@@ -95,6 +96,13 @@ export function appNavigate(uri?: string, options: IReloadNowOptions = {}) {
 
                 return;
             }
+            const activeConference = getConferenceState(getState()).conference;
+            const activeURL = activeConference?.getConnection()[JITSI_CONNECTION_URL_KEY];
+
+            // Opening the current room is not a request to replace ourselves.
+            if (activeURL?.hostname === location.hostname && activeURL?.pathname === location.pathname) {
+                return;
+            }
             try {
                 const session = await restoreSession();
 
@@ -106,7 +114,9 @@ export function appNavigate(uri?: string, options: IReloadNowOptions = {}) {
                 }
                 location = parseURIString(await roomURL(location.room));
             } catch (error) {
-                queueAccountError(error instanceof Error ? error.message : '暂时无法加入会议。');
+                if (!(error instanceof DeviceSwitchCancelled)) {
+                    queueAccountError(error instanceof Error ? error.message : '暂时无法加入会议。');
+                }
                 replaceRoot(screen.welcome.main);
 
                 return;

@@ -1,0 +1,21 @@
+{
+  "version": "1.0.9",
+  "versionCode": 24460100,
+  "publishedDate": "2026-10-02",
+  "package": "com.guangyuxinneng.meeting",
+  "arm64Sha256": "4b63683de58dd630547bfd57569ecedefd3fead42e3da4fbe8a103d273e4c178",
+  "universalSha256": "144e6229d3f4cce9176e1ac1a72e478cf82978f4cf4715fd550ef41ae12822e7",
+  "bundleSha256": "fcb802ff36ba703bdc77fcd8c551adeeb4f42a6cdd632d2ac3c36bd66b444ec4",
+  "signerSha256": "d9e7c3fb2351cd116859241526a0566f488d05ec768d6d09b0d0e9e10261a83a",
+  "checks": {
+    "regressions": "passed",
+    "typecheck": "passed",
+    "apkIdentityAndSignature": "passed",
+    "serverHashesAndPublicManifest": "passed",
+    "emulatorLegacyMigration": "1.0.8 HTTPS download, test-only versioned handoff, system installer; installed 1.0.9/24460100",
+    "physicalDevice": "not connected; not verified",
+    "subsequentNativeUpdate": "not yet verified",
+    "randomMeetingDeviceJoin": "not yet verified"
+  },
+  "metadataBackup": "/opt/jitsi-download/backups/24460100-before-1.0.9"
+}

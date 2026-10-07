@@ -72,10 +72,10 @@ export default function AppUpdateDialog() {
             visible = { state.phase !== 'idle' }>
             <View style = { styles.overlay }>
                 <MacWindowCard
-                    onClose = { dismissAppUpdate }
                     style = { styles.card }
                     title = { `${zh ? '应用更新' : 'App update'} · ${state.version}` }>
                     <View style = { styles.content }>
+                        <Text style = { styles.description }>{`${zh ? '应用更新' : 'App update'} · ${state.version}`}</Text>
                         <Text style = { styles.description }>{description}</Text>
                         {downloading && <View style = { styles.track }>
                             <View style = { [ styles.fill, { width: `${percent}%` } ] } />

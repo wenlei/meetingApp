@@ -1,7 +1,6 @@
 import { maybeRedirectToTokenAuthUrl } from '../../app/actions.any';
 import { IReduxState, IStore } from '../../app/types';
 import { isTokenAuthInline } from '../../authentication/functions.any';
-import { readyToClose } from '../../mobile/external-api/actions';
 import { transcriberJoined, transcriberLeft } from '../../transcribing/actions';
 import { setIAmVisitor } from '../../visitors/actions';
 import { iAmVisitor } from '../../visitors/functions';
@@ -100,6 +99,8 @@ import { IConferenceMetadata, IJitsiConference } from './reducer';
  * @returns {void}
  */
 function _addConferenceListeners(conference: IJitsiConference, dispatch: IStore['dispatch'], state: IReduxState) {
+    let deviceTransferred = false;
+
     // A simple logger for conference errors received through
     // the listener. These errors are not handled now, but logged.
     conference.on(JitsiConferenceEvents.CONFERENCE_ERROR,
@@ -117,7 +118,13 @@ function _addConferenceListeners(conference: IJitsiConference, dispatch: IStore[
 
     conference.on(
         JitsiConferenceEvents.CONFERENCE_FAILED,
-        (err: string, ...args: any[]) => dispatch(conferenceFailed(conference, err, ...args)));
+        (err: string, ...args: any[]) => {
+            // A replaced endpoint is intentionally leaving. Late Jingle failures
+            // must not replace the handoff notice with a reconnect dialog.
+            if (!deviceTransferred) {
+                dispatch(conferenceFailed(conference, err, ...args));
+            }
+        });
     conference.on(
         JitsiConferenceEvents.CONFERENCE_JOINED,
         (..._args: any[]) => dispatch(conferenceJoined(conference)));
@@ -151,6 +158,7 @@ function _addConferenceListeners(conference: IJitsiConference, dispatch: IStore[
         (participant: any, reason: any, isReplaced: boolean) => {
 
             if (isReplaced) {
+                deviceTransferred = true;
                 const localParticipant = getLocalParticipant(state);
 
                 dispatch(participantUpdated({
@@ -161,7 +169,7 @@ function _addConferenceListeners(conference: IJitsiConference, dispatch: IStore[
                     isReplaced
                 }));
 
-                dispatch(readyToClose());
+                dispatch(kickedOut(conference, participant, true));
             } else {
                 dispatch(kickedOut(conference, participant));
             }
@@ -753,17 +761,19 @@ export function endConference() {
  * for which the event is being signaled.
  * @param {JitsiParticipant} participant - The {@link JitsiParticipant}
  * instance which initiated the kick event.
+ * @param {boolean} deviceTransferred - Whether the server confirmed a device handoff.
  * @returns {{
  *     type: KICKED_OUT,
  *     conference: JitsiConference,
  *     participant: JitsiParticipant
  * }}
  */
-export function kickedOut(conference: IJitsiConference, participant: Object) {
+export function kickedOut(conference: IJitsiConference, participant: Object, deviceTransferred = false) {
     return {
         type: KICKED_OUT,
         conference,
-        participant
+        participant,
+        deviceTransferred
     };
 }
 
@@ -1148,4 +1158,3 @@ export function redirect(vnode: string, focusJid: string, username: string) {
             });
     };
 }
-

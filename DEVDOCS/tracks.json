@@ -1,0 +1,25 @@
+{
+  "title": "会议室 Android 故障整改",
+  "tracks": {"release": "更新可靠性", "room": "随机会议", "roles": "会议主持权限", "handoff": "设备切换"},
+  "nodes": [
+    {"id":"handoff-silent-close","track":"handoff","title":"设备替换后直接关闭会议 Activity","status":"superseded","note":"1.0.10 行为；用户要求明确设备切换说明，见 ADR-005"},
+    {"id":"handoff-result-notice","track":"handoff","title":"设备切换提示等待确认后退出","status":"superseded","deps":["handoff-silent-close"],"supersedes":"handoff-silent-close","branch":"ADR-005 提示修正","note":"1.0.11 候选实测被迟到的 JVB 错误覆盖；未发布"},
+    {"id":"handoff-notice-cleanup","track":"handoff","title":"先断开旧端再显示结果，隔离迟到错误","status":"done","deps":["handoff-result-notice"],"supersedes":"handoff-result-notice","branch":"ADR-006 时序修正","note":"已添加实际回调及退出顺序回归；普通错误不屏蔽"},
+    {"id":"handoff-notice-device","track":"handoff","title":"新提示构建、真机验收与发布","status":"now","deps":["handoff-notice-cleanup"],"note":"1.0.12 两端安装完成，待指纹登录及双向 UI 验收；线上仍为 1.0.10"},
+    {"id":"handoff-source","track":"handoff","title":"注册账号按会议确认切换设备","status":"superseded","note":"ADR-004 替代信令入会即移除时机；历史方案未部署"},
+    {"id":"handoff-media","track":"handoff","title":"登录检测与图标主动切换，媒体就绪后提交","status":"done","deps":["handoff-source"],"supersedes":"handoff-source","branch":"ADR-004 两阶段切换","note":"已含于 1.0.10；真实 Prosody 兼容修复见 BUG-004"},
+    {"id":"handoff-integration","track":"handoff","title":"真机与模拟器双向切换及匿名访客验收","status":"done","deps":["handoff-media"],"note":"JVB connected 后移除旧端，访客保留；真实 30 秒候选超时和确认取消通过。不是两台真机或真人听感无缝证明"},
+    {"id":"handoff-release","track":"handoff","title":"新版本发布与服务端协调启用","status":"done","deps":["handoff-integration"],"note":"2026-10-07 发布 1.0.10/24460200，全量启用注册账号设备切换；保留 1.0.9"},
+    {"id":"handoff-edge-cases","track":"handoff","title":"等候室、分组讨论、网络迁移与第二台真机","status":"todo","deps":["handoff-release"],"note":"尚未验证，不能推广核心路径测试的结论"},
+    {"id":"authenticated-owner","track":"roles","title":"将已认证用户自动授予主持人","status":"superseded","note":"会议身份与主持权混淆；BUG-003、ADR-002"},
+    {"id":"host-role-enforcement","track":"roles","title":"独立主持登记与服务端权限拦截","status":"done","deps":["authenticated-owner"],"supersedes":"authenticated-owner","branch":"ADR-002 权限修复","note":"2026-10-05 已部署；线上隔离房间越权拒绝和主持人结束均通过"},
+    {"id":"host-role-device","track":"roles","title":"预约及真机退出菜单验收","status":"todo","deps":["host-role-enforcement"]},
+    {"id":"old-gate","track":"release","title":"模拟器和哈希通过即认为升级正常","status":"superseded","note":"真机反例推翻充分性假设；见 ADR-001"},
+    {"id":"phone-audit","track":"release","title":"PKT110 同文件不同 URI 对照","status":"done","deps":["old-gate"],"note":"已装版本最终读回 1.0.8；产品修复尚未完成"},
+    {"id":"versioned-uri","track":"release","title":"版本化安装 URI 源码修复及本地回归","status":"done","deps":["phone-audit"],"branch":"ADR-001 返工","supersedes":"old-gate","note":"已含于 1.0.9；真机升级归入下一验收节点"},
+    {"id":"device-gate","track":"release","title":"真机在线连续升级后关闭 BUG-001","status":"now","deps":["versioned-uri"],"note":"PKT110 1.0.9 原生在线升级至 1.0.10 通过；后续不同版本、取消重试和第二台真机待覆盖"},
+    {"id":"room-diagnosis","track":"room","title":"首次留空无动作：代码级复现","status":"done","note":"初始随机名为空，挂载错过焦点事件，点击没有兜底"},
+    {"id":"room-fix","track":"room","title":"点击即时生成随机名及代码回归","status":"done","deps":["room-diagnosis"],"note":"已含于线上 1.0.9，待真机验收"},
+    {"id":"room-device","track":"room","title":"真机会话恢复后留空入会","status":"done","deps":["room-fix"],"note":"1.0.10 PKT110 指纹恢复后留空创建并作为 Wenlei 主持人入会；首次密码登录等路径未穷举"}
+  ]
+}

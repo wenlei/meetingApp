@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+本 fork 的实际发布状态、故障与交接要求优先查阅 [DEVDOCS/DEVDOC.md](DEVDOCS/DEVDOC.md) 和 [DEVDOCS/NOW.md](DEVDOCS/NOW.md)；下文保留上游开发参考，不代表已完成本项目真机验收。
+
 ## Development Commands
 
 ### Building and Development
