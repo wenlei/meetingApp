@@ -5,6 +5,7 @@ import logger from '../app/logger';
 
 import { deviceId, requestDeviceJoin } from './deviceHandoff.native';
 import { handoffConferenceLeft, registerMediaHandoff } from './handoffMedia.native';
+import { meetingPayload } from './meetingSchedule';
 
 const ACCOUNT_URL = 'https://113.46.187.140:18003';
 
@@ -21,14 +22,103 @@ export interface IAccountUser {
 }
 
 export interface IMeetingReservation {
+    attendees: IAccountUser[];
+    can_edit: boolean;
     date: string;
     end_time: string;
     id: number;
     meeting_room: string;
     meeting_url: string;
+    notes: string;
     organizer: { display_name: string; username: string; } | null;
     start_time: string;
     title: string;
+}
+
+const reservationListeners = new Set<() => void>();
+let currentSession: IAccountSession | null = null;
+
+export function subscribeReservations(listener: () => void) {
+    reservationListeners.add(listener);
+
+    return () => {
+        reservationListeners.delete(listener);
+    };
+}
+
+// Calendar APIs reuse the existing account session; never persist or send passwords.
+async function calendarRequest(path: string, method = 'GET', body?: unknown) {
+    const session = await restoreSession();
+
+    if (!session) {
+        throw new Error('authentication_required');
+    }
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
+    try {
+        const response = await fetch(`${ACCOUNT_URL}${path}`, {
+            method, headers: { Authorization: `Bearer ${session.token}`, 'Content-Type': 'application/json' },
+            ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal: controller.signal
+        }).catch(() => {
+            throw new Error(method === 'GET' ? 'network_error' : 'save_uncertain');
+        });
+
+        if (currentSession?.token !== session.token) {
+            throw new Error('authentication_required');
+        }
+        if (response.status === 401) {
+            await clearLocalSession();
+            throw new Error('authentication_required');
+        }
+        const data = await response.json().catch(() => {
+            throw new Error(method === 'GET' ? 'network_error' : 'save_uncertain');
+        });
+
+        if (currentSession?.token !== session.token) {
+            throw new Error('authentication_required');
+        }
+        if (!response.ok) {
+            throw new Error(response.status >= 500 && method !== 'GET' ? 'save_uncertain'
+                : response.status === 404 ? 'event_unavailable' : data.error || 'request_failed');
+        }
+
+        return data;
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
+export async function meetingDirectory(): Promise<IAccountUser[]> {
+    const data = await calendarRequest('/api/users');
+
+    if (!Array.isArray(data.users)) {
+        throw new Error('network_error');
+    }
+
+    return data.users.map(userFrom);
+}
+
+export async function saveMeeting(payload: ReturnType<typeof meetingPayload>, event?: IMeetingReservation) {
+    if (event && !event.can_edit) {
+        throw new Error('event_unavailable');
+    }
+    const data = await calendarRequest(event ? `/api/events/${event.id}` : '/api/events', event ? 'PUT' : 'POST', payload);
+
+    if (!data?.event || !Number.isSafeInteger(data.event.id) || data.event.id <= 0) {
+        throw new Error('save_uncertain');
+    }
+    reservationListeners.forEach(listener => listener());
+
+    return data.event as IMeetingReservation;
+}
+
+export async function cancelMeeting(event: IMeetingReservation) {
+    if (!event.can_edit) {
+        throw new Error('event_unavailable');
+    }
+    await calendarRequest(`/api/events/${event.id}`, 'DELETE');
+    reservationListeners.forEach(listener => listener());
 }
 
 interface IAccountSession {
@@ -36,7 +126,6 @@ interface IAccountSession {
     user: IAccountUser;
 }
 
-let currentSession: IAccountSession | null = null;
 let restorePromise: Promise<IAccountSession | null> | null = null;
 let pendingRoom: string | null = null;
 let pendingError: string | null = null;
@@ -428,19 +517,7 @@ export async function meetingReservations(): Promise<IMeetingReservation[]> {
     if (!session) {
         return [];
     }
-    const response = await fetch(`${ACCOUNT_URL}/api/meeting-reservations`, {
-        headers: { Authorization: `Bearer ${session.token}` }
-    });
-
-    if (response.status === 401) {
-        await clearLocalSession();
-
-        return [];
-    }
-    if (!response.ok) {
-        throw new Error('暂时无法读取会议邀请。');
-    }
-    const data = await responseBody(response);
+    const data = await calendarRequest('/api/meeting-reservations');
 
     return Array.isArray(data.meetings) ? data.meetings.filter((item: unknown) => {
         if (!item || typeof item !== 'object') {

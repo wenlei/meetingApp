@@ -26,6 +26,7 @@ node branding/tests/prism-clock.cjs
 node branding/tests/update-version.cjs
 node branding/tests/update-artifacts.cjs
 node branding/tests/random-room.cjs
+node branding/tests/meeting-schedule.cjs
 node branding/tests/device-handoff.cjs
 node branding/tests/handoff-media.cjs
 node branding/tests/device-transfer-notice.cjs

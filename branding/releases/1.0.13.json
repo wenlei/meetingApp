@@ -1,0 +1,30 @@
+{
+  "version": "1.0.13",
+  "versionCode": 24460500,
+  "status": "published-upgrade-verified-feature-checks-partial",
+  "publishedDate": "2026-10-08",
+  "metadataBackup": "/opt/jitsi-download/backups/24460500-before-1.0.13",
+  "releaseAuthorization": "User explicitly approved publication after second-device upgrade and explanation of device identifier. Remaining feature UI checks stay open; not represented as fully accepted.",
+  "candidateDate": "2026-10-08",
+  "sourceBaseCommit": "a9872d476b6512081c4517affe1b1376d61781e8",
+  "sourceState": "Includes uncommitted Android account scheduling changes; no iOS build or commit/push in this release turn.",
+  "package": "com.guangyuxinneng.meeting",
+  "arm64Size": 37798042,
+  "arm64Sha256": "42495005e774ac6564cda908a027b3a8a8ddbbb3dae7ec5bda8790d32bad8ccc",
+  "universalSize": 109725203,
+  "universalSha256": "96d294ed8acfb088d26038517d443a43d72c27cd740eec7a6c37bb204240486d",
+  "bundleSha256": "854782e95f1abf8ef042d6de0f1d385001807dcff9c014ded15768fbcedc2bd4",
+  "signerSha256": "d9e7c3fb2351cd116859241526a0566f488d05ec768d6d09b0d0e9e10261a83a",
+  "stagingDirectory": "/opt/jitsi-release-1.0.13",
+  "checks": {
+    "physicalDeviceUpgrade": "Second device OPPO PFEM10 had no prior app. Installed formal 1.0.12 baseline, then invoked its real native HTTPS downloader. Size/hash/package/signer/version checks passed. After user granted per-app install-source permission, harness reused the verified network download; native install revalidated it without URI rewrite. System reports 1.0.13 / 24460500. Update harness removed, main app retained. Waiting for user login and feature UI check; no claim of prior account retention on this fresh device. Installer intermediate 1.0.13 screen was not captured.",
+    "build": "Release script regression suites, web/native types, Gradle assembleRelease, APK identities/signatures/ABIs and bundle checks passed. Existing dependency warnings remain.",
+    "server": "Published the same verified candidate bytes. Public latest and download page report 1.0.13 / 24460500; server immutable APKs and both fixed aliases match manifest hashes. Full public HTTPS downloads of arm64 and universal aliases independently match manifest SHA-256. Metadata backed up before switching latest last.",
+    "emulatorUpgrade": "Installed 1.0.12 AppUpdate module downloaded candidate over HTTPS and verified size/hash/package/signer/version, then handed to system installer. After confirmation dumpsys reports 1.0.13 / 24460500. Existing account retained. Instrumentation was terminated by package replacement, not a claimed app runtime crash. No test URI rewrite or data reset.",
+    "scheduleUI": "Organizer searched and selected disposable internal attendee; empty room saved a random room; date picker opened; end time changed with native time picker and saved; cancellation confirmed in native alert. Existing real event retained.",
+    "attendeeAPI": "Disposable attendee read the same event as read-only; DELETE returned 404. Updated end time synchronized; organizer cancellation left attendee meetings empty.",
+    "physicalHome": "After user login, PFEM10 home shows account calendar, Schedule/Invite action and active browser-device handoff. Full physical feature CRUD remains untested. Phone locked before settings version UI verification; actual package version is verified via system.",
+    "cleanup": "Probe event canceled via App; disposable attendee/session and remote helper removed; emulator and phone update harness uninstalled; main App data retained. Local/server distribution retains 1.0.13 and 1.0.12; exact 1.0.10 binaries and redundant local candidate aliases removed. Metadata and signing keys retained. Local 1.0.13 versioned APKs moved into android-download.",
+    "notVerified": "Original PKT110 upgrade for this candidate; installer intermediate 1.0.13 version display; physical target-feature/soft-keyboard interaction after login; invited-account App/web UI; conference invitation entry and joining from invitation; latest update prompt; cancellation/retry. PFEM10 is the second physical device and its native online upgrade passed. No iOS build."
+  }
+}

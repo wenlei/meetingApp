@@ -1,24 +1,28 @@
 # Android 发布台账
 
-故障与验收状态以 [DEVDOCS/NOW.md](DEVDOCS/NOW.md) 为准：1.0.10 已发布。PKT110 从 1.0.9 原生网络升级成功，系统和设置版本一致；真机留空入会、真机/模拟器双向设备切换通过。第二台真机、更多更新轮次及网络/等候室边界仍待覆盖。
+故障与验收状态以 [DEVDOCS/NOW.md](DEVDOCS/NOW.md) 为准：1.0.13 已发布。模拟器和第二台 PFEM10 原生在线升级通过，系统读回 1.0.13 / 24460500。模拟器日程 CRUD 和受邀账号 API 权限通过；真机完整功能、更新取消重试及网络/等候室边界仍待覆盖。
 
-会议室线上状态核实于 2026-10-07；eplant 状态沿用 2026-10-01 的核实结果。两个 App 的包名、签名密钥和下载目录完全独立，不能混用。本文件不保存任何密码、私钥内容或账号令牌。每次发布后应更新版本号、versionCode、APK SHA-256、下载地址及发布日期。
+会议室线上状态核实于 2026-10-08；eplant 状态沿用 2026-10-01 的核实结果。两个 App 的包名、签名密钥和下载目录完全独立，不能混用。本文件不保存任何密码、私钥内容或账号令牌。每次发布后应更新版本号、versionCode、APK SHA-256、下载地址及发布日期。
 
 | 项目 | eplant／聚光智维 | 光域新能会议室 |
 |---|---|---|
 | 源码 | `/Users/wenlei/Documents/GitHub/eplant/mobile`（Flutter） | `/Users/wenlei/Documents/GitHub/meetingApp`（Jitsi React Native fork） |
 | Android 包名 | `com.eplant.eplant_ops` | `com.guangyuxinneng.meeting` |
-| 线上版本 | `0.18.44` | `1.0.10` |
-| versionCode | `170` | `24460200` |
+| 线上版本 | `0.18.44` | `1.0.13` |
+| versionCode | `170` | `24460500` |
 | 下载地址 | <http://focus.xiaoxianglink.com/app/download?platform=android> | <https://113.46.187.140:18001/android/guangyu-meeting.apk> |
 | 服务器 APK | `/root/infra/eplant/app_dist/rongkun-hub-v0.18.44.apk`（121.40.121.163） | `/opt/jitsi-download/guangyu-meeting.apk`（113.46.187.140；由 18001 服务提供） |
-| 本地发布包 | `/Users/wenlei/Documents/GitHub/eplant/mobile/build/app/outputs/flutter-apk/app-release.apk` | `/Users/wenlei/Documents/GitHub/jitsi-ecs-deploy/android-download/guangyu-meeting-1.0.10-24460200-arm64-v8a.apk`（默认）及 `guangyu-meeting-1.0.10-24460200-universal.apk`（备用） |
-| APK SHA-256 | `37686cf5bdd7e2b99e82b58c9da69088ec93c2c9514fc836a2b7bc8ea2eec599` | `f53d0f700fa416d401cc1a48223443d4a73fea423b08e9785cc5f39f99866374`（arm64） |
+| 本地发布包 | `/Users/wenlei/Documents/GitHub/eplant/mobile/build/app/outputs/flutter-apk/app-release.apk` | `/Users/wenlei/Documents/GitHub/jitsi-ecs-deploy/android-download/guangyu-meeting-1.0.13-24460500-arm64-v8a.apk`（默认）及 `guangyu-meeting-1.0.13-24460500-universal.apk`（备用） |
+| APK SHA-256 | `37686cf5bdd7e2b99e82b58c9da69088ec93c2c9514fc836a2b7bc8ea2eec599` | `42495005e774ac6564cda908a027b3a8a8ddbbb3dae7ec5bda8790d32bad8ccc`（arm64） |
 | 发布签名 SHA-256 | `6B:10:0B:75:F9:42:E5:08:1F:F4:E8:77:FA:51:FD:4B:1A:36:AA:75:72:46:84:2A:77:AC:2D:BC:56:5D:7A:CA` | `D9:E7:C3:FB:23:51:CD:11:68:59:24:15:26:A0:56:6F:48:8D:05:EC:76:8D:6D:09:B0:D0:E9:E1:02:61:A8:3A` |
 | 签名文件 | `/Users/wenlei/eplant-release.jks`（alias `eplant`） | `/Users/wenlei/.local/share/guangyu-meeting/signing/meeting-release.p12`（alias `guangyu-meeting`） |
 | 口令位置 | eplant 密码库；不写入仓库 | macOS 钥匙串服务 `com.guangyuxinneng.meeting.android-signing`，账号 `wenlei` |
 
 ## 已核实与未核实
+
+- 当前：2026-10-08 发布 1.0.13 / 24460500。两个包大小为 37,798,042 / 109,725,203 字节；universal SHA-256 为 `96d294ed8acfb088d26038517d443a43d72c27cd740eec7a6c37bb204240486d`。模拟器和第二台 PFEM10 从 1.0.12 原生在线升级通过。复用候选字节，未重新构建；用户确认后切换正式清单，元数据备份为 `/opt/jitsi-download/backups/24460500-before-1.0.13`。新功能测试和剩余边界见 `branding/releases/1.0.13.json`。本地/服务器分发保留 1.0.13 和 1.0.12；1.0.10 二进制及本地候选重复别名已清理，元数据和长期密钥保留。以下为历史记录。
+
+- 当前：2026-10-07 发布 1.0.12 / 24460400。两个包大小为 37,789,850 / 109,721,107 字节；universal SHA-256 为 `9fec0328bdde45ee676cc9a7a7b7954bfb6642fcc040c4de64bf382667d6ed74`。手机/模拟器双向中英文设备切换提示通过，提示不会被重连页覆盖；手机设置与公网发布信息一致。正式源码为 `a9872d4`，沿用已验证候选字节。1.0.11 未发布，失败原因和范围见 `branding/releases/1.0.12.json` 与 ADR-006。以下为历史发布记录。
 
 - 当前：2026-10-07 发布 1.0.10 / 24460200。两个包大小为 37,789,850 / 109,721,107 字节；universal SHA-256 为 `4b408663e0ab1b5c4b83258259e96ff595bb6c4ea84cc60111cddba7a705fb23`。完整身份和验收边界见 `branding/releases/1.0.10.json`。手机、模拟器与服务端已启用设备切换；匿名访客保留，真实候选超时安全撤回。元数据备份 `/opt/jitsi-download/backups/24460200-before-1.0.10`。
 - 以下 1.0.9 及以前段落为历史记录，不覆盖本轮追加验收。
@@ -49,6 +53,8 @@
 4. 更新本台账及各项目发布文档。eplant 详见 `/Users/wenlei/Documents/GitHub/eplant/mobile/docs/发布配置.md` 与 `/Users/wenlei/Documents/GitHub/eplant/app_dist.md`；会议室详见 `/Users/wenlei/Documents/GitHub/meetingApp/INTERNAL_APP.md`。
 
 ## 会议室 Android 构建保留规则
+
+- 当前保留 1.0.12、1.0.10。2026-10-07 预览并删除本地/服务器各两个 1.0.9 APK，删除本地候选目录四个冗余 APK。失败的 1.0.11 已清理；保留元数据、签名密钥。1.0.9 如无其他备份需重新构建。以下为此前清理记录。
 
 - 分发目录保留 1.0.10 和 1.0.9，每版含 arm64/universal，另有当前固定别名。2026-10-07 在真机更新与核心切换通过后，预览并清理本地 6 个、服务器 4 个 1.0.7/1.0.8 旧产物；历史元数据、密钥保留。旧二进制不可直接从分发目录恢复，须另有安全副本或从源码重建。没有清理 eplant。
 - 新版先完成签名、包名／版本、文件大小及 SHA-256 检查，上传后再做公网下载与安装验证。**只有确认新版健康且上一版可回退时**，才运行 `branding/prune-android-releases.cjs`：先不带 `--apply` 预览，再带 `--apply` 清理。本机使用分发目录的 `version.json` 和 `version-上一版.json`；服务器使用当前 `version.json` 和发布前备份的上一版 `version.json`。`prepare-android-release.cjs` 会自动保存被替换的本机版本清单。

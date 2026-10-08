@@ -1,6 +1,6 @@
 import React from 'react';
 import { WithTranslation } from 'react-i18next';
-import { AppState, GestureResponderEvent, Linking, Text, TextStyle, TouchableWithoutFeedback, View, ViewStyle } from 'react-native';
+import { AppState, GestureResponderEvent, Linking, Pressable, Text, TextStyle, TouchableWithoutFeedback, View, ViewStyle } from 'react-native';
 import { connect } from 'react-redux';
 
 import { getDefaultURL } from '../../app/functions.native';
@@ -12,8 +12,9 @@ import Icon from '../../base/icons/components/Icon';
 import { IconCalendar } from '../../base/icons/svg';
 import NavigateSectionList from '../../base/react/components/native/NavigateSectionList';
 import { Item, Section } from '../../base/react/types';
+import { MeetingReservationCard } from '../../internal-account/MeetingSchedule.native';
 import { brandPalette } from '../../internal-account/brandPalette.native';
-import { IMeetingReservation, MEETING_URL, meetingReservations, subscribeAccountSession } from '../../internal-account/mobileSession.native';
+import { IMeetingReservation, MEETING_URL, meetingReservations, subscribeAccountSession, subscribeReservations } from '../../internal-account/mobileSession.native';
 import styles from '../../welcome/components/styles.native';
 import { isWelcomePageEnabled } from '../../welcome/functions';
 import { isRecentListEnabled, toDisplayableList } from '../functions.native';
@@ -59,8 +60,10 @@ interface IProps extends WithTranslation {
  *
  */
 class RecentList extends AbstractRecentList<IProps> {
-    state = { reservations: [] as IMeetingReservation[] };
+    state = { reservations: [] as IMeetingReservation[], reservationError: false };
     private unsubscribeAccount?: () => void;
+    private unsubscribeReservations?: () => void;
+    private reservationGeneration = 0;
     private appStateSubscription?: { remove: () => void; };
     private mounted = false;
     private reservationRefreshTimer?: ReturnType<typeof setInterval>;
@@ -75,6 +78,7 @@ class RecentList extends AbstractRecentList<IProps> {
 
         // Bind event handlers so they are only bound once per instance.
         this._onLongPress = this._onLongPress.bind(this);
+        this._onPress = this._onPress.bind(this);
         this._onRefreshReservations = this._onRefreshReservations.bind(this);
     }
 
@@ -82,7 +86,12 @@ class RecentList extends AbstractRecentList<IProps> {
         super.componentDidMount();
         this.mounted = true;
         if (this.props._brandedApp) {
-            this.unsubscribeAccount = subscribeAccountSession(() => this._onRefreshReservations());
+            this.unsubscribeAccount = subscribeAccountSession(() => {
+                this.reservationGeneration++;
+                this.setState({ reservations: [], reservationError: false });
+                this._onRefreshReservations();
+            });
+            this.unsubscribeReservations = subscribeReservations(this._onRefreshReservations);
             this.appStateSubscription = AppState.addEventListener('change', state => {
                 if (state === 'active') {
                     this._onRefreshReservations();
@@ -96,6 +105,7 @@ class RecentList extends AbstractRecentList<IProps> {
     override componentWillUnmount() {
         this.mounted = false;
         this.unsubscribeAccount?.();
+        this.unsubscribeReservations?.();
         this.appStateSubscription?.remove();
         if (this.reservationRefreshTimer) {
             clearInterval(this.reservationRefreshTimer);
@@ -103,14 +113,19 @@ class RecentList extends AbstractRecentList<IProps> {
     }
 
     async _onRefreshReservations() {
+        const generation = ++this.reservationGeneration;
+
         try {
             const reservations = await meetingReservations();
 
-            if (this.mounted) {
-                this.setState({ reservations });
+            if (this.mounted && generation === this.reservationGeneration) {
+                this.setState({ reservations, reservationError: false });
             }
         } catch (_) {
             // Keep the history list usable if the account service is unavailable.
+            if (this.mounted && generation === this.reservationGeneration) {
+                this.setState({ reservationError: true });
+            }
         }
     }
 
@@ -166,17 +181,27 @@ class RecentList extends AbstractRecentList<IProps> {
                         </View>
                         <View style = { styles.brandedUpcomingEmptyCopy as ViewStyle }>
                             <Text style = { styles.brandedUpcomingEmptyTitle as TextStyle }>
-                                { i18next.language?.startsWith('zh')
+                                { this.state.reservationError ? (i18next.language?.startsWith('zh')
+                                    ? '暂时无法读取日程' : 'Meetings unavailable') : i18next.language?.startsWith('zh')
                                     ? '暂无会议安排' : 'No meetings scheduled' }
                             </Text>
                             <Text style = { styles.brandedUpcomingEmptyText as TextStyle }>
-                                { i18next.language?.startsWith('zh')
+                                { this.state.reservationError ? (i18next.language?.startsWith('zh')
+                                    ? '请检查网络后重试，已保存的日程不会丢失'
+                                    : 'Check your connection and retry. Saved meetings are not lost.') : i18next.language?.startsWith('zh')
                                     ? '收到邀请后，会议信息会自动显示在这里'
                                     : 'Invitations will appear here automatically' }
                             </Text>
                         </View>
                     </View>
-                ) : undefined,
+                ) : (info: Object) => {
+                    const { item } = info as { item: Item; };
+                    const meeting = reservations.find(value => `reservation-${value.id}` === item.id);
+
+                    return meeting ? <MeetingReservationCard
+                        meeting = { meeting }
+                        onJoin = { this._onPress } /> : null;
+                },
                 title: i18next.language?.startsWith('zh')
                     ? '近期日程' : 'Next event'
             } as Section);
@@ -190,6 +215,12 @@ class RecentList extends AbstractRecentList<IProps> {
                         disabled ? styles.recentListDisabled : styles.recentList,
                         this.props._brandedApp ? styles.brandedRecentList : undefined
                     ] as ViewStyle[] }>
+                    {this.state.reservationError && <Pressable
+                        accessibilityRole = 'button'
+                        onPress = { this._onRefreshReservations }>
+                        <Text style = {{ color: brandPalette.dangerText }}>{i18next.language?.startsWith('zh')
+                            ? '日程更新失败，点此重试' : 'Unable to refresh meetings. Tap to retry.'}</Text>
+                    </Pressable>}
                     <NavigateSectionList
                         branded = { this.props._brandedApp }
                         disabled = { disabled }

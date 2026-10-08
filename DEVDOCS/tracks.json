@@ -1,11 +1,15 @@
 {
   "title": "会议室 Android 故障整改",
-  "tracks": {"release": "更新可靠性", "room": "随机会议", "roles": "会议主持权限", "handoff": "设备切换"},
+  "tracks": {"release": "更新可靠性", "room": "随机会议", "roles": "会议主持权限", "handoff": "设备切换", "schedule": "账号日程邀请"},
   "nodes": [
+    {"id":"schedule-source","track":"schedule","title":"App 选人、日程 CRUD 与共享账号日历","status":"done","note":"2026-10-08 源码、UI/接口回归、类型检查、SDK Java 编译和账号服务 7 项隔离测试通过；含于 1.0.13"},
+    {"id":"schedule-device","track":"schedule","title":"Android 升级及模拟器/受邀 API 验证","status":"done","deps":["schedule-source"],"note":"1.0.13 签名/哈希、模拟器和 PFEM10 原生网络升级、模拟器 CRUD 和受邀账号 API 权限通过；不是全部真机功能验收"},
+    {"id":"schedule-release","track":"schedule","title":"新版本身份核验及发布","status":"done","deps":["schedule-device"],"note":"用户确认后发布 1.0.13/24460500，同一候选字节；清单/页面/服务器别名一致"},
+    {"id":"schedule-followup","track":"schedule","title":"补测真机功能与完善显示文案","status":"todo","deps":["schedule-release"],"note":"补测受邀端 UI、会议内邀请和更新取消重试；北京时间文案待下一版，不覆盖已发布字节；设备短码提示优化待实施"},
     {"id":"handoff-silent-close","track":"handoff","title":"设备替换后直接关闭会议 Activity","status":"superseded","note":"1.0.10 行为；用户要求明确设备切换说明，见 ADR-005"},
     {"id":"handoff-result-notice","track":"handoff","title":"设备切换提示等待确认后退出","status":"superseded","deps":["handoff-silent-close"],"supersedes":"handoff-silent-close","branch":"ADR-005 提示修正","note":"1.0.11 候选实测被迟到的 JVB 错误覆盖；未发布"},
     {"id":"handoff-notice-cleanup","track":"handoff","title":"先断开旧端再显示结果，隔离迟到错误","status":"done","deps":["handoff-result-notice"],"supersedes":"handoff-result-notice","branch":"ADR-006 时序修正","note":"已添加实际回调及退出顺序回归；普通错误不屏蔽"},
-    {"id":"handoff-notice-device","track":"handoff","title":"新提示构建、真机验收与发布","status":"now","deps":["handoff-notice-cleanup"],"note":"1.0.12 两端安装完成，待指纹登录及双向 UI 验收；线上仍为 1.0.10"},
+    {"id":"handoff-notice-device","track":"handoff","title":"新提示构建、真机验收与发布","status":"done","deps":["handoff-notice-cleanup"],"note":"1.0.12 已发布；手机/模拟器双向中英文提示与登录保留通过；公网与手机版本一致"},
     {"id":"handoff-source","track":"handoff","title":"注册账号按会议确认切换设备","status":"superseded","note":"ADR-004 替代信令入会即移除时机；历史方案未部署"},
     {"id":"handoff-media","track":"handoff","title":"登录检测与图标主动切换，媒体就绪后提交","status":"done","deps":["handoff-source"],"supersedes":"handoff-source","branch":"ADR-004 两阶段切换","note":"已含于 1.0.10；真实 Prosody 兼容修复见 BUG-004"},
     {"id":"handoff-integration","track":"handoff","title":"真机与模拟器双向切换及匿名访客验收","status":"done","deps":["handoff-media"],"note":"JVB connected 后移除旧端，访客保留；真实 30 秒候选超时和确认取消通过。不是两台真机或真人听感无缝证明"},

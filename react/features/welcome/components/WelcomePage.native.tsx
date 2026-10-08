@@ -26,6 +26,7 @@ import Button from '../../base/ui/components/native/Button';
 import Input from '../../base/ui/components/native/Input';
 import { BUTTON_TYPES } from '../../base/ui/constants.native';
 import getUnsafeRoomText from '../../base/util/getUnsafeRoomText.native';
+import MeetingScheduleButton from '../../internal-account/MeetingSchedule.native';
 import { brandPalette } from '../../internal-account/brandPalette.native';
 import WelcomePageTabs
     from '../../mobile/navigation/components/welcome/components/WelcomePageTabs';
@@ -411,6 +412,7 @@ class WelcomePage extends AbstractWelcomePage<IProps> {
                                     src = { IconArrowRight } /> }
                         </TouchableOpacity> }
                     </View>
+                    {_brandedApp && <MeetingScheduleButton room = { this.state.room } />}
                     {
                         this._renderInsecureRoomNameWarning()
                     }

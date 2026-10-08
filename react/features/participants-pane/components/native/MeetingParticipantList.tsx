@@ -1,14 +1,16 @@
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, Text, TextStyle, View } from 'react-native';
+import { FlatList, StyleSheet, Text, TextStyle, View } from 'react-native';
 import { connect, useDispatch } from 'react-redux';
 
 import { IReduxState } from '../../../app/types';
+import { getConferenceState } from '../../../base/conference/functions';
 import Icon from '../../../base/icons/components/Icon';
 import { IconAddUser } from '../../../base/icons/svg';
 import {
     addPeopleFeatureControl,
     getParticipantById,
+    isLocalParticipantModerator,
     isScreenShareParticipant,
     setShareDialogVisiblity
 } from '../../../base/participants/functions';
@@ -17,17 +19,26 @@ import Input from '../../../base/ui/components/native/Input';
 import { BUTTON_TYPES } from '../../../base/ui/constants.native';
 import {
     getBreakoutRooms,
-    getCurrentRoomId
+    getCurrentRoomId,
+    isInBreakoutRoom
 } from '../../../breakout-rooms/functions';
+import MeetingScheduleButton from '../../../internal-account/MeetingSchedule.native';
+import { brandPalette } from '../../../internal-account/brandPalette.native';
 import { doInvitePeople } from '../../../invite/actions.native';
 import { getInviteOthersControl } from '../../../share-room/functions';
 import { iAmVisitor } from '../../../visitors/functions';
+import { isWelcomePageEnabled } from '../../../welcome/functions';
 import { getSortedParticipantIds, shouldRenderInviteButton } from '../../functions';
 
 import MeetingParticipantItem from './MeetingParticipantItem';
 import styles from './styles';
 
+const calendarStyles = StyleSheet.create({
+    entry: { backgroundColor: brandPalette.surface, borderRadius: 12, paddingHorizontal: 12 }
+});
+
 interface IProps {
+    calendarRoom?: string;
     currentRoom?: {
         jid: string;
         name: string;
@@ -43,6 +54,7 @@ interface IProps {
 
 
 const MeetingParticipantList = ({
+    calendarRoom,
     currentRoom,
     iconColor,
     isAddPeopleFeatureEnabled,
@@ -108,6 +120,11 @@ const MeetingParticipantList = ({
                     style = { styles.inviteButton }
                     type = { BUTTON_TYPES.PRIMARY } />
             }
+            {calendarRoom && <View style = { calendarStyles.entry }>
+                <MeetingScheduleButton
+                    inMeeting = { true }
+                    room = { calendarRoom } />
+            </View>}
             <Input
                 clearable = { true }
                 customStyles = {{
@@ -159,6 +176,8 @@ function _mapStateToProps(state: IReduxState) {
     const visitorsCount = state['features/visitors']?.count || 0;
 
     return {
+        calendarRoom: isWelcomePageEnabled(state) && isLocalParticipantModerator(state) && !isInBreakoutRoom(state)
+            ? getConferenceState(state).room : undefined,
         currentRoom,
         iconColor: color,
         inviteOthersControl,

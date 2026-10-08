@@ -2,7 +2,7 @@
 
 Android 当前线上版本、签名指纹、安装包校验值及另一款 eplant App 的独立发布信息，统一登记在 [Android 发布台账](ANDROID_RELEASES.md)。
 
-故障与后续交接先读 [DEVDOCS/DEVDOC.md](DEVDOCS/DEVDOC.md)。截至 2026-10-02，当前线上及模拟器为 `1.0.9 / 24460100`；两项修复已发布，真机本轮未连接，最后观察到手机为 1.0.8，不声称手机已更新。仍待真机连续升级与随机入会验收。
+故障与后续交接先读 [DEVDOCS/DEVDOC.md](DEVDOCS/DEVDOC.md)。截至 2026-10-08，线上、第二台 PFEM10 和模拟器为 `1.0.13 / 24460500`。两端原生在线升级通过；模拟器账号日程 CRUD 和受邀 API 权限通过。真机新功能完整操作、原 PKT110 本轮升级及会议内邀请等边界仍待覆盖。
 
 本 fork 当前只发布独立 Android App，固定连接 `https://113.46.187.140:18001`，不使用公开的 `meet.jit.si`。Android 应用标识为 `com.guangyuxinneng.meeting`。iOS 暂不构建、不发布，待 Android 版本稳定后再单独讨论。
 
@@ -19,9 +19,20 @@ Android 当前线上版本、签名指纹、安装包校验值及另一款 eplan
 
 目前 App 要求先登录内部账号；匿名访客仍可使用网页访客邀请链接。在 App 内输入或粘贴会议室名称/链接可以加入。Android 已注册 18001 的 HTTPS 地址过滤器，但系统是否直接唤起 App 仍取决于设备的链接打开设置。iOS 暂不构建、不发布。
 
+## App 账号日程邀请（1.0.13 已发布）
+
+首页的“安排会议 · 邀请参会者”打开日程表单。日期和起止时间按 UTC+8 保存。会议室名称留空时生成随机 ASCII 名称；非空输入沿用 6–64 位英文字母、数字、`-`、`_` 规则，也可粘贴本系统无凭证邀请链接。不另设中文显示标题，已有网页日程标题仍保留。
+
+参会者按姓名或 `@用户名` 搜索，可多选最多 50 位内部账号。App 复用账号服务的事件和参会者关系。保存后双方账号日程可读取同一事件，App 的“近期日程”显示详情和加入入口。组织者可修改和取消；受邀者只读。会议内主持人的参会者列表也有账号邀请入口，已有同房间预约优先复用。
+
+App 不写手机系统日历，不自动拉人进入通话，不授予主持权限。取消日程不会结束通话。保存成功立即刷新本端；其他端回前台、下拉或每 90 秒刷新。网络写入结果不确定时，必须先刷新检查，不能自动重复提交。
+
+自动回归、构建、模拟器日程 CRUD、受邀账号 API 权限及第二台手机网络升级通过。用户确认后发布 1.0.13 / 24460500；真机完整功能操作、受邀端 UI 和会议内邀请仍待补测。详见发布记录，不将已发布等同于全部边界已验证。
+
 ## 验证
 
 - `npm run tsc:ci`
+- `node branding/tests/meeting-schedule.cjs`
 - `npx eslint react/features/internal-account react/features/app/actions.native.ts react/features/app/functions.native.ts react/features/mobile/navigation/components/RootNavigationContainer.tsx react/features/settings/components/native/ConferenceSection.tsx`
 - iOS 模拟器：`cd ios && pod install`，再用 Xcode 构建 `JitsiMeet` scheme。命令行构建需要启用模拟器本地签名（`CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=`）；完全关闭签名会让 iOS Keychain 报缺少 entitlement，无法验证登录页。真机仍需本组织的 Apple Developer Team。
 - Android：安装 Android SDK 后从 `android/` 构建。已通过 `:app:assembleDebug` 和 `:app:assembleRelease`；正式版使用专用长期密钥签名。Jitsi Android SDK 手动登记原生模块，因此新增模块也必须加入 `ReactHostHolder.getReactNativePackages()`。发布前须确认 APK 中的 JS bundle 已更新；构建脚本已把生成的 bundle 显式设为资源合并输入，同时要校对两个产物的 SHA-256 并以模拟器界面复核。

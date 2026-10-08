@@ -68,6 +68,7 @@ class ReactHostHolder {
                 new AndroidSettingsModule(reactContext),
                 new AppInfoModule(reactContext),
                 new AppUpdateModule(reactContext),
+                new MeetingDateTimeModule(reactContext),
                 new AudioModeModule(reactContext),
                 new DropboxModule(reactContext),
                 new ExternalAPIModule(reactContext),
